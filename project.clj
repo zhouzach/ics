@@ -6,7 +6,7 @@
                  [re-frame "0.8.0"]
                  [cljs-ajax "0.5.8"]
                  [secretary "1.2.3"]
-                 [cljsjs/highcharts "4.2.6-0"] ; no use ?!
+                 [cljsjs/highcharts "4.2.6-0"]              ; no use ?!
                  [cljsjs/reactable "0.12.5-0"]
                  [cljsjs/nprogress "0.2.0-1"]
                  [com.andrewmcveigh/cljs-time "0.4.0"]

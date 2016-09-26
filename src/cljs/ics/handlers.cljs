@@ -48,28 +48,31 @@
     (assoc db :apusers value)))
 
 (reg-event-db
-  :select
-  (fn [db [_ select]]
-    (case select
-      :default nil
+  :detail-user
+  (fn [db [_ value]]
+    (assoc db :detail-user value)))
+
+(reg-event-db
+  :page
+  (fn [db [_ value]]
+    (case value
       :users (GET
                "http://auth.appadhoc.com/users"
                {:headers {"Auth-Key" (:authkey db)}
-                :handler #(dispatch [:users %])})
+                :handler #(dispatch [:users (% "users")])})
       :apusers (GET
                  "http://auth.appadhoc.com/applied_users"
                  {:headers {"Auth-Key" (:authkey db)}
-                  :handler #(dispatch [:apusers %])})
-      :paydetails nil
-      :about nil)
-    (assoc db :select select)))
+                  :handler #(dispatch [:apusers (% "applied_users")])})
+      nil)
+    (assoc db :page value)))
 
 (reg-event-db
-  :paydetails
-  (fn [db [_ email]]
-    (let [users (get (:users db) "users")]
-      (assoc db :current-pay-user
-                (first
-                  (filter
-                    #(= email (get % "email"))
-                    users))))))
+  :user
+  (fn [db [_ id]]
+    (println "de7:" (:authkey db))
+    (GET
+      (str "http://auth.appadhoc.com/user/" id)
+      {:headers {"Auth-Key" (:authkey db)}
+       :handler #(dispatch [:detail-user %])})
+    (assoc db :page :user)))

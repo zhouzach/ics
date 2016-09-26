@@ -8,21 +8,21 @@
     (:username db)))
 
 (reg-sub
-  :select
+  :page
   (fn [db]
-    (:select db)))
+    (:page db)))
 
 (reg-sub
   :users
   (fn [db]
-    (get (:users db) "users")))
+    (:users db)))
 
 (reg-sub
   :apusers
   (fn [db]
-    (get (:apusers db) "applied_users")))
+    (:apusers db)))
 
 (reg-sub
-  :current-pay-user
+  :detail-user
   (fn [db]
-    (:current-pay-user db)))
+    (:detail-user db)))

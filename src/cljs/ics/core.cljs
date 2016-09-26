@@ -15,8 +15,9 @@
            [goog.history EventType]))
 
 ;; -- Routes and History -------
-(defroute "/" [] (dispatch [:select :default]))
-(defroute "/:select" [select] (dispatch [:select (keyword select)]))
+(defroute "/" [] (dispatch [:page :default]))
+(defroute "/user/:id" [id] (dispatch [:user id]))
+(defroute "/nav/:page" [page] (dispatch [:page (keyword page)]))
 
 (def history
   (doto (History.)

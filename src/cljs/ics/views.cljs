@@ -7,7 +7,8 @@
             [cljs-time.coerce :as c]
             [cljsjs.reactable]
             [cljsjs.nprogress]
-            [ics.common :refer [validate-email]]
+            [ics.common :refer [validate-email sec-to-date date-to-format sec-to-format]]
+            [cljs.pprint :refer [pprint]]
             ))
 
 (defn login-in []
@@ -20,9 +21,7 @@
                                 (dispatch [:login username password]))))}
    [:p "username: " [:input {:type "text" :placeholder "username" :id "username"}] [:br]]
    [:p "password: " [:input {:type "password" :placeholder "password" :id "password"}] [:br]]
-   [:p [:input {:type "submit" :value "login" :class "btn bt-default btn-lg"}]] [:br]
-   ])
-
+   [:p [:input {:type "submit" :value "login" :class "btn bt-default btn-lg"}]] [:br]])
 
 (defn login-in-success []
   (let [username (subscribe [:username])]
@@ -51,7 +50,8 @@
               {:name "Berlin"
                :data [-0.9, 0.6, 3.5, 8.4, 13.5, 17.0, 18.6, 17.9, 14.3, 9.0, 3.9, 1.0]}
               {:name "London"
-               :data [3.9, 4.2, 5.7, 8.5, 11.9, 15.2, 17.0, 16.6, 14.2, 10.3, 6.6, 4.8]}]})
+               :data [3.9, 4.2, 5.7, 8.5, 11.9, 15.2, 17.0, 16.6, 14.2, 10.3, 6.6, 4.8]}]
+   })
 
 (defn hello-message [name]
   (r/create-class
@@ -111,15 +111,15 @@
                     :value    (:text @state)}]
            [:button (str "Add #" (count (:items @state)))]]])})))
 
-(defn highcharts []
+(defn highcharts [config]
   (r/create-class
     {:reagent-render
      (fn []
-       [:div {:style {:min-width "310px" :max-width "1000px"
-                      :height    "600px" :margin "0 auto"}}])
+       [:div {:style {:min-width "310px" :max-width "2000px"
+                      :height    "400px" :margin "0 auto"}}])
      :component-did-mount
      (fn [this]
-       (js/Highcharts.Chart. (r/dom-node this) (clj->js hi-config)))}))
+       (js/Highcharts.Chart. (r/dom-node this) (clj->js config)))}))
 
 (defn reactable [data]
   [:div
@@ -144,13 +144,13 @@
 (defn default []                                            ;; todo for test
   (fn []
     [:div
-     [:div "default"]
-     [reactable (clj->js (let [n 10]
-                           (repeatedly n (fn [] {:Name "ccd" :Age (rand-int n)}))))]
-     ;[highcharts]
+     [:pre (with-out-str (pprint (first (filter #(= "george.zhu@baichanghui.com" (% "email")) (:users @re-frame.db/app-db)))))]
+     ;[:div "default"]
+     ;[reactable (clj->js (let [n 10]
+     ;                      (repeatedly n (fn [] {:Name "ccd" :Age (rand-int n)}))))]
+     ;[highcharts hi-config]
      ;[:div (str (js/Date. 1473436800000))]
-     ;[:div (f/unparse (f/formatters :date-time-no-ms) (c/from-long 1473436800000))]
-     ]))
+     [:div (sec-to-format 1472659200)] ]))
 
 (defn about []
   (fn []
@@ -159,12 +159,18 @@
       {:on-click (fn [e] (js/console.log (-> e .-target .-innerText)))}
       "boid"]
 
+     [:input {:tpye "text"}]
+
+     ;[:div.input-group.input-goup-lg
+     ; [:span.input-group-addon "Search"]
+     ; [:input.form-control {:type "text" :placeholder "Search"}]]
+
      ;[:form
      ; [:input {:type "radio" :checked "true" :name "A"}]
      ; [:input {:type "radio" :name "B"}]
      ; ]
 
-     [:div "dfdf"]
+     ;[:div "dfdf"]
 
      ;[:div.btn-group {:data-toggle "buttons"}
      ; [:label.btn.btn-primary.active
@@ -175,48 +181,100 @@
      "about"]))
 
 (defn users-table []
-  (let [users (subscribe [:users])
-        items-per-page 15]
-    (r/create-class
-      {:reagent-render
-       (fn []
-         [:table.table.table-bordered.table-striped.table-condensed.table-responsive
-          [:thead
+  (let [users (subscribe [:users])]
+    (fn []
+      [:div.panel.panel-default
+       [:div.panel-heading "Panel heading"]
+       [:div.panel-body
+        [:p "blabla"]]
+       [:table.table.table-bordered.table-striped.table-condensed.table-responsive
+        [:thead
+         [:tr
+          [:th "账户"]
+          [:th "创建日期"]
+          [:th "注册来源"]
+          [:th "手机号"]
+          [:th "黑名单"]
+          [:th "API"]
+          [:th "MAU"]
+          [:td "付费详情"]]]
+        [:tbody
+         (for [u @users]
            [:tr
-            [:th "账户"]
-            [:th "创建日期"]
-            [:th "注册来源"]
-            [:th "手机号"]
-            [:th "黑名单"]
-            [:th "API"]
-            [:th "MAU"]
-            [:td "付费详情"]
-            ]]
-          [:tbody
-           (for [user @users]
-             [:tr
-              [:td (get user "email")]
-              [:td (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (get user "created_at"))))]
-              [:td (get (get user "operation_info") "from")]
-              [:td (get (get user "operation_info") "phone")]
-              [:td [:button.btn.btn-primary {:on-click #(js/console.log "拉黑")} "拉黑"]]
-              [:td (last (last (get user "api")))]
-              [:td (last (last (get user "mau")))]
-              [:td [:a {:href (str "#/paydetails/" (get user "email"))} "付费详情"]]
-              ;[:td [:a {:href "#/paydetails" :on-click #(dispatch [:paydetails (get user "email")])} "付费详情"]]
-              ])]]
-         )
-       })))
+            [:td (u "email")]
+            [:td (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (u "created_at"))))]
+            [:td ((u "operation_info") "from")]
+            [:td ((u "operation_info") "phone")]
+            [:td [:button.btn.btn-primary {:on-click #(js/console.log "拉黑")} "拉黑"]]
+            [:td (last (last (u "api")))]
+            [:td (last (last (u "mau")))]
+            [:td [:a {:href (str "#/user/" (u "id"))} "付费详情"]]])]]
+       [:div.panel-body
+        [:button.btn.btn-default "click me!"]]])))
+
+; [rich-table data]
+(comment
+  (defn rich-table [data]                                   ;; add page nav buttons
+    [:table.table.table-bordered.table-striped
+     [:thead>tr
+      (for [th (keys (first data))]
+        [:th (str th)])
+      [:tbody
+       (for [d data]
+         [:tr [:td (val d)]])]]]))
 
 (defn apusers-table []
+  (let [apusers (subscribe [:apusers])]
+    (fn []
+      [:table.table.table-bordered.table-striped
+       [:thead
+        [:tr
+         [:th "申请时间"]
+         [:th "公司 / 产品"]
+         [:th "姓名"]
+         [:th "邮件"]
+         [:th "手机号"]
+         [:th "MAU"]
+         [:th "发送邀请码"]
+         [:th "丢弃"]
+         [:th "处理状态"]]]
+       [:tbody
+        (for [u (take 10 @apusers)]
+          [:tr
+           [:td (u "created_at")]
+           [:td (u "company")]
+           [:td (u "name")]
+           [:td (u "email")]
+           [:td (u "phone")]
+           [:td (u "mau")]
+           [:td [:button.btn.btn-primary {:on-click #(println "send1")} "发送"]]
+           [:td [:button.btn.btn-primary {:on-click #(println "send2")} "丢弃"]]
+           [:td (u "discard")]])]])))
+
+(defn apusers-table2 []
   (let [apusers (subscribe [:apusers])
         page-num (r/atom 1)
         items-per-page 10
+        search (r/atom "")
         ]
     (r/create-class
       {:reagent-render
        (fn []
          [:div.container
+          [:div.input-group.input-goup-lg
+           [:span.input-group-addon "Search"]
+           [:input.form-control
+            {:type      "text" :placeholder "Search" :value @search
+             :on-change (fn [e]
+                          (js/console.log (-> e .-target .-value))
+                          (reset! search (-> e .-target .-value))
+                          (dispatch [:apusers {"applied_users"
+                                               (filter (fn [apuser]
+                                                         (boolean
+                                                           (or
+                                                             (re-find (re-pattern @search) (get apuser "company"))
+                                                             (re-find (re-pattern @search) (get apuser "name")))))
+                                                       @apusers)}]))}]]
           [:table.table.table-bordered.table-striped
            [:thead
             [:tr
@@ -227,15 +285,33 @@
              [:th "手机号"]
              [:th "MAU"
               [:span [:button.btn.btn-default
-                      {:on-click #(dispatch [:apusers {"applied_users" (sort-by (fn [e] (get e "mau")) @apusers)}])}
+                      {:on-click #(dispatch [:apusers {"applied_users"
+                                                       (sort-by (fn [e] (get e "mau")) @apusers)}])}
                       "降序"]]]
              [:th "发送邀请码"]
              [:th "丢弃"]
              [:th "处理状态"]]]
            [:tbody
-            (for [apuser (subvec @apusers
-                                 (* items-per-page (dec @page-num))
-                                 (* items-per-page @page-num))]
+            (for [apuser
+                  ;(subvec
+                  ;  (filter (fn [apuser]
+                  ;            (boolean (or
+                  ;                       (re-find (re-pattern @search) (get apuser "company"))
+                  ;                       (re-find (re-pattern @search) (get apuser "name"))
+                  ;                       )))
+                  ;          @apusers)
+                  ;  ;@apusers
+                  ;  (* items-per-page (dec @page-num))
+                  ;  (* items-per-page @page-num)
+                  ;  )
+
+                  (filter (fn [apuser]
+                            (boolean (or
+                                       (re-find (re-pattern @search) (get apuser "company"))
+                                       (re-find (re-pattern @search) (get apuser "name"))
+                                       )))
+                          @apusers)
+                  ]
               [:tr
                [:td (get apuser "created_at")]
                [:td (get apuser "company")]
@@ -254,69 +330,73 @@
          )
        })))
 
-(defn paydetails-graph []
-  (let [user (subscribe [:current-pay-user])]
+(defn config [user]
+  (let [api (user "api")
+        email (user "email")
+        pay (user "pay")
+        api-series {:name "api"
+                    :data (for [{:strs [day num]} api]
+                            [(sec-to-format day) num])}
+        pay-series (for [{:strs [begin end num]} pay]
+                     {:name      "pay"
+                      :lineWidth 5
+                      :data      (map (fn [d] [(date-to-format d) num])
+                                      (take (inc (t/in-days (t/interval (sec-to-date begin) (sec-to-date end))))
+                                            (iterate (fn [d] (t/plus d (t/days 1))) (sec-to-date begin))))})]
+    {:chart    {:type "line"}
+     :title    {:text (str "email: " email)
+                :x    -20}
+     :subtitle {:text ""
+                :x    -20}
+     ;:xAxis       {:categories (mapv #(format-date (% "day")) api)}
+     :yAxis    {:title     {:text "数量"}
+                :min       0
+                :plotLines [{:value 0 :width 1 :color "#808080"}]}
+     :tooltip  {:valueSuffix ""}
+     :legend   {:layout        "vertial"
+                :align         "right"
+                :verticalAlign "middle"
+                :borderWidth   0}
+     ;:series   (vec (cons api-series pay-series)) ; todo not fit of string "2016-10-10"
+     :series   [api-series]}))
+
+(defn user-graph []
+  (let [user (subscribe [:detail-user])]
     (fn []
       [:div
-       [:p "付款详情"]
-       [:p (str "帐号" (get @user "email"))]
-       [:p "收费设置"]
-       ])))
+       [:pre "付费详情"]
+       [highcharts (config @user)]])))
 
 (defn main []
-  (let [select (subscribe [:select])]
-    (r/create-class
-      {:reagent-render
-       (fn []
-         [:div.main
-          (case @select
-            :default [default]
-            :users [users-table]
-            :apusers [apusers-table]
-            :paydetails [paydetails-graph]
-            :about [about]
-            )])
-       })))
+  (let [page (subscribe [:page])]
+    (fn []
+      [:div.main
+       (case @page
+         :default [default]
+         :users [users-table]
+         :apusers [apusers-table]
+         :about [about]
+         :user [user-graph])])))
 
 (defn main-panel []
   (let [username (subscribe [:username])
-        select (subscribe [:select])]
-
-    (if (nil? @username)
-      [:div.container
-       [:div.page-header [:h1 "ICS"]]
-       [:div.jumbotron [login-in]]]
-
-      [:div.container
-       ;[:div.jumbotron
-       [:nav.navbar.navbar-default
-        [:div.container-fluid
-         ;[:div.navbar-header
-         ; [:a.pull-left {:href "#/"} [:img {:src "cljs.png"}]]]
-         [:div.collapse.navbar-collapse
-          [:ul.nav.nav-pills
-           [:li {:class (when (= @select :default) "active")}
-            [:a {:href "#/"} "Default"]]
-           [:li {:class (when (= @select :users) "active")}
-            [:a {:href "#/users"} "用户"]]
-           [:li {:class (when (= @select :apusers) "active")}
-            [:a {:href "#/apusers"} "申请用户"]]
-           [:li.dropdown
-            [:a.dropdown-toggle {:href          "#/users" :data-toggle "dropdown" :role "button"
-                                 :aria-haspopup "true" :aria-expanded "false"}
-             "Contact Us" [:span.caret]]
-            [:ul.dropdown-menu
-             [:li [:a {:href "#"} "XX"]]
-             [:li [:a {:href "#"} "YY"]]
-             [:li.divider {:role "separator"} [:a {:href "#"}]]
-             [:li [:a {:href "#"} "ZZ"]]]]
-           [:li {:class (when (= @select :about) "active")}
-            [:a {:href "#/about"} "About"]]]
-
-          ;[:from.navbar-form.navbar-right {:role "search"}
-          ; [:div.form-group
-          ;  [:input.form-control {:type "text" :placeholder "Search"}]]
-          ; [:button.btn.btn-default {:type "submit"} "Submit"]]
-          ]]]
-       [main]
-       ])))
+        page (subscribe [:page])]
+    (fn []
+      (if (nil? @username)
+        [:div.container
+         [:div.page-header [:h1 "ICS"]]
+         [:div.jumbotron [login-in]]]
+        [:div.container
+         [:nav.navbar.navbar-default
+          [:div.container-fluid
+           [:div.collapse.navbar-collapse
+            [:ul.nav.nav-pills
+             [:li {:class (when (= @page :default) "active")}
+              [:a {:href "#/nav/default"} "Default"]]
+             [:li {:class (when (= @page :users) "active")}
+              [:a {:href "#/nav/users"} "用户"]]
+             [:li {:class (when (= @page :apusers) "active")}
+              [:a {:href "#/nav/apusers"} "申请用户"]]
+             [:li {:class (when (= @page :about) "active")}
+              [:a {:href "#/nav/about"} "About"]]]]]]
+         [main]]))))
