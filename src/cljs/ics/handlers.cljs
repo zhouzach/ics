@@ -82,25 +82,6 @@
                    "http://auth.appadhoc.com/applied_users"
                    {:headers {"Auth-Key" authkey}
                     :handler #(dispatch [:apusers (% "applied_users")])})
-        ;:testin-api-sum (go
-        ;                  (let [users ((<! (async-get "http://auth.appadhoc.com/users" authkey)) "users")
-        ;                        testin-users (filter #(= "testin" (% "third_party_from")) users)
-        ;                        testin-users-ids (set (map #(% "id") testin-users))
-        ;                        apps ((<! (async-get "http://auth.appadhoc.com/apps" authkey)) "apps")
-        ;                        testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
-        ;                        testin-apps-ids (map #(% "id") testin-apps)
-        ;                        all (atom 0)]
-        ;                    (doseq [id testin-apps-ids]
-        ;                      (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" id
-        ;                                                   "/daily_api_count?"
-        ;                                                   "from_hour=" "2016-01-10T17:48:31.953z"
-        ;                                                   "&to_hour=" "2016-10-12T17:48:31.953z")
-        ;                                              authkey))
-        ;                                "daily_api_count")
-        ;                            nums (map #(% "api_count" 0) v)
-        ;                            sum (reduce + nums)]
-        ;                        (swap! all #(+ % sum))
-        ;                        (dispatch [:testin-api-sum @all])))))
         nil))
     (assoc db :page value)))
 
