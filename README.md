@@ -8,7 +8,8 @@ A [re-frame](https://github.com/Day8/re-frame) application designed to ... well,
 
 ```
 lein clean
-lein figwheel dev
+rlwrap lein figwheel dev
+
 ```
 
 Figwheel will automatically push cljs changes to the browser.

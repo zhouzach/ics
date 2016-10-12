@@ -20,6 +20,7 @@
     <orderEntry type="library" name="Leiningen: cheshire:5.5.0" level="project" />
     <orderEntry type="library" name="Leiningen: cider/cider-nrepl:0.10.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Leiningen: cljs-ajax:0.5.8" level="project" />
+    <orderEntry type="library" name="Leiningen: cljs-http:0.1.42" level="project" />
     <orderEntry type="library" name="Leiningen: cljsjs/highcharts:4.2.6-0" level="project" />
     <orderEntry type="library" name="Leiningen: cljsjs/nprogress:0.2.0-1" level="project" />
     <orderEntry type="library" name="Leiningen: cljsjs/react-dom-server:15.1.0-0" level="project" />
@@ -61,6 +62,7 @@
     <orderEntry type="library" name="Leiningen: mvxcvi/puget:0.8.1" level="project" />
     <orderEntry type="library" name="Leiningen: mvxcvi/whidbey:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: net.colourcoding/poppea:0.2.1" level="project" />
+    <orderEntry type="library" name="Leiningen: noencore:0.3.3" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.httpcomponents/httpasyncclient:4.1.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.httpcomponents/httpclient:4.5.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.httpcomponents/httpcore-nio:4.4.4" level="project" />
@@ -68,18 +70,26 @@
     <orderEntry type="library" name="Leiningen: org.clojars.brenton/google-diff-match-patch:0.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.8.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/clojurescript:1.9.89" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/core.async:0.2.391" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/core.cache:0.6.5" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/core.memoize:0.5.9" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/data.codec:0.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/data.finger-tree:0.0.2" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/data.json:0.2.6" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/data.priority-map:0.0.7" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/google-closure-library-third-party:0.0-20160609-f42b4a24" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/google-closure-library:0.0-20160609-f42b4a24" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/tools.analyzer.jvm:0.6.10" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/tools.analyzer:0.6.9" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.logging:0.3.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.nrepl:0.2.12" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.reader:1.0.0-beta1" level="project" />
     <orderEntry type="library" name="Leiningen: org.javassist/javassist:3.18.1-GA" level="project" />
     <orderEntry type="library" name="Leiningen: org.mozilla/rhino:1.7R5" level="project" />
     <orderEntry type="library" name="Leiningen: org.msgpack/msgpack:0.6.10" level="project" />
+    <orderEntry type="library" name="Leiningen: org.ow2.asm/asm-all:4.2" level="project" />
     <orderEntry type="library" name="Leiningen: org.tcrawley/dynapath:0.2.3" level="project" />
+    <orderEntry type="library" name="Leiningen: re-com:0.9.0" level="project" />
     <orderEntry type="library" name="Leiningen: re-frame:0.8.0" level="project" />
     <orderEntry type="library" name="Leiningen: reagent:0.6.0-rc" level="project" />
     <orderEntry type="library" name="Leiningen: refactor-nrepl:1.2.0-SNAPSHOT" level="project" />

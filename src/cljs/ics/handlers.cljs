@@ -1,5 +1,8 @@
 (ns ics.handlers
-  (:require [re-frame.core :refer [reg-event-db path reg-sub dispatch subscribe]]
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [cljs-http.client :as http]
+            [cljs.core.async :refer [chan <! >! put! take!]]
+            [re-frame.core :refer [reg-event-db path reg-sub dispatch subscribe]]
             [ajax.core :refer [GET POST]]
             [ics.db :as db]))
 
@@ -53,24 +56,82 @@
     (assoc db :detail-user value)))
 
 (reg-event-db
+  :testin-api-sum
+  (fn [db [_ value]]
+    (assoc db :testin-api-sum value)))
+
+;;
+(defn async-get
+  [url authkey]
+  (let [ch (chan)]
+    (GET url {:headers {"Auth-Key" authkey}
+              :handler (fn [res] (put! ch res))})
+    ch))
+
+;; no depend, make request respectively
+(reg-event-db
   :page
   (fn [db [_ value]]
-    (case value
-      :users (GET
-               "http://auth.appadhoc.com/users"
-               {:headers {"Auth-Key" (:authkey db)}
-                :handler #(dispatch [:users (% "users")])})
-      :apusers (GET
-                 "http://auth.appadhoc.com/applied_users"
-                 {:headers {"Auth-Key" (:authkey db)}
-                  :handler #(dispatch [:apusers (% "applied_users")])})
-      nil)
+    (let [authkey (:authkey db)]
+      (case value
+        :users (GET
+                 "http://auth.appadhoc.com/users"
+                 {:headers {"Auth-Key" authkey}
+                  :handler #(dispatch [:users (% "users")])})
+        :apusers (GET
+                   "http://auth.appadhoc.com/applied_users"
+                   {:headers {"Auth-Key" authkey}
+                    :handler #(dispatch [:apusers (% "applied_users")])})
+        ;:testin-api-sum (go
+        ;                  (let [users ((<! (async-get "http://auth.appadhoc.com/users" authkey)) "users")
+        ;                        testin-users (filter #(= "testin" (% "third_party_from")) users)
+        ;                        testin-users-ids (set (map #(% "id") testin-users))
+        ;                        apps ((<! (async-get "http://auth.appadhoc.com/apps" authkey)) "apps")
+        ;                        testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
+        ;                        testin-apps-ids (map #(% "id") testin-apps)
+        ;                        all (atom 0)]
+        ;                    (doseq [id testin-apps-ids]
+        ;                      (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" id
+        ;                                                   "/daily_api_count?"
+        ;                                                   "from_hour=" "2016-01-10T17:48:31.953z"
+        ;                                                   "&to_hour=" "2016-10-12T17:48:31.953z")
+        ;                                              authkey))
+        ;                                "daily_api_count")
+        ;                            nums (map #(% "api_count" 0) v)
+        ;                            sum (reduce + nums)]
+        ;                        (swap! all #(+ % sum))
+        ;                        (dispatch [:testin-api-sum @all])))))
+        nil))
     (assoc db :page value)))
+
+(reg-event-db
+  :acc-testin-api
+  (fn [db [_ from_hour to_hour]]
+    (let [authkey (:authkey db)]
+      (go
+        (let [users ((<! (async-get "http://auth.appadhoc.com/users" authkey)) "users")
+              testin-users (filter #(= "testin" (% "third_party_from")) users)
+              testin-users-ids (set (map #(% "id") testin-users))
+              apps ((<! (async-get "http://auth.appadhoc.com/apps" authkey)) "apps")
+              testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
+              testin-apps-ids (map #(% "id") testin-apps)
+              all (atom 0)]
+          (doseq [appid testin-apps-ids]
+            (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" appid
+                                         "/daily_api_count?"
+                                         "from_hour=" from_hour
+                                         "&to_hour=" to_hour)
+                                    authkey))
+                      "daily_api_count")
+                  nums (map #(% "api_count" 0) v)
+                  sum (reduce + nums)]
+              (swap! all #(+ % sum))
+              (dispatch [:testin-api-sum @all]))))))
+    db))
 
 (reg-event-db
   :user
   (fn [db [_ id]]
-    (println "de7:" (:authkey db))
     (GET
       (str "http://auth.appadhoc.com/user/" id)
       {:headers {"Auth-Key" (:authkey db)}

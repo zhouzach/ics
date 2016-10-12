@@ -4,7 +4,9 @@
                  [reagent "0.6.0-rc"]
                  [binaryage/devtools "0.6.1"]
                  [re-frame "0.8.0"]
+                 [re-com "0.9.0"]
                  [cljs-ajax "0.5.8"]
+                 [cljs-http "0.1.42"]
                  [secretary "1.2.3"]
                  [cljsjs/highcharts "4.2.6-0"]              ; no use ?!
                  [cljsjs/reactable "0.12.5-0"]
