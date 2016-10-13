@@ -12,13 +12,14 @@
                  [cljsjs/reactable "0.12.5-0"]
                  [cljsjs/nprogress "0.2.0-1"]
                  [com.andrewmcveigh/cljs-time "0.4.0"]
+                 [figwheel-sidecar "0.5.8"]
                  ]
 
   :plugins [[lein-cljsbuild "1.1.3"]]
 
   :min-lein-version "2.5.3"
 
-  :source-paths ["src/clj"]
+  :source-paths ["src/clj" "script"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
@@ -28,7 +29,7 @@
   {:dev
    {:dependencies []
 
-    :plugins      [[lein-figwheel "0.5.4-3"]]
+    :plugins      [[lein-figwheel "0.5.8"]]
     }}
 
   :cljsbuild
