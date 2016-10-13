@@ -239,9 +239,6 @@
       "acc"]
      [debug @testin-api-sum]]))
 
-(defn script []
-  [:div "i dfl i"])
-
 (defn main []
   (let [page (subscribe [:page])]
     (fn []
@@ -256,7 +253,6 @@
          :user [user-graph]
          :video [video]
          :localvideo [localvideo]
-         :script [script]
          :testin-api-sum [testin-api-sum]
          )])))
 
@@ -281,8 +277,6 @@
               [:a {:href "#/nav/apusers"} "申请用户"]]
              [:li {:class (when (= @page :about) "active")}
               [:a {:href "#/nav/about"} "About"]]
-             [:li {:class (when (= @page :script) "active")}
-              [:a {:href "#/nav/script"} "Script"]]
              [:li {:class (when (= @page :testin-api-sum) "active")}
               [:a {:href "#/nav/testin-api-sum"} "testin-api-sum"]]
              [:li.dropdown

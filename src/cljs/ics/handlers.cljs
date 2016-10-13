@@ -60,14 +60,6 @@
   (fn [db [_ value]]
     (assoc db :testin-api-sum value)))
 
-;;
-(defn async-get
-  [url authkey]
-  (let [ch (chan)]
-    (GET url {:headers {"Auth-Key" authkey}
-              :handler (fn [res] (put! ch res))})
-    ch))
-
 ;; no depend, make request respectively
 (reg-event-db
   :page
@@ -84,6 +76,21 @@
                     :handler #(dispatch [:apusers (% "applied_users")])})
         nil))
     (assoc db :page value)))
+
+(defn async-get
+  [url authkey]
+  (let [ch (chan)]
+    (GET url {:headers {"Auth-Key" authkey}
+              :handler (fn [res] (put! ch res))})
+    ch))
+
+;; how to write sync code?
+;(defn sync-get
+;  [url authkey]
+;  (let [r (atom nil)]
+;    (GET url {:headers {"Auth-Key" authkey}
+;              :handler (fn [res] (reset! r res))})
+;    @r))
 
 (reg-event-db
   :acc-testin-api
@@ -109,6 +116,31 @@
               (swap! all #(+ % sum))
               (dispatch [:testin-api-sum @all]))))))
     db))
+
+;(reg-event-db
+;  :acc-testin-api
+;  (fn [db [_ from_hour to_hour]]
+;    (let [authkey (:authkey db)]
+;      (let [users ((sync-get "http://auth.appadhoc.com/users" authkey) "users")
+;            _ (print "d1:" (count users))
+;            testin-users (filter #(= "testin" (% "third_party_from")) users)
+;            testin-users-ids (set (map #(% "id") testin-users))
+;            apps ((sync-get "http://auth.appadhoc.com/apps" authkey) "apps")
+;            testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
+;            testin-apps-ids (map #(% "id") testin-apps)
+;            all (atom 0)]
+;        (doseq [appid testin-apps-ids]
+;          (let [v ((sync-get (str "http://data.appadhoc.com/apps/" appid
+;                                  "/daily_api_count?"
+;                                  "from_hour=" from_hour
+;                                  "&to_hour=" to_hour)
+;                             authkey)
+;                    "daily_api_count")
+;                nums (map #(% "api_count" 0) v)
+;                sum (reduce + nums)]
+;            (swap! all #(+ % sum))
+;            (dispatch [:testin-api-sum @all])))))
+;    db))
 
 (reg-event-db
   :user

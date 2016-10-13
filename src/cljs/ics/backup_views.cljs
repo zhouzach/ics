@@ -11,6 +11,7 @@
             [ics.common :refer [validate-email sec-to-date date-to-format sec-to-format]]
             [cljs.pprint :refer [pprint]]
             ))
+
 (defn debug [data]
   [:pre (with-out-str (pprint data))])
 
@@ -98,7 +99,6 @@
                     :value    (:text @state)}]
            [:button (str "Add #" (count (:items @state)))]]])})))
 
-
 (defn reactable [data]
   [:div
    [:> Reactable.Table
@@ -119,8 +119,7 @@
    ]
   )
 
-
-(defn default []                                            ;; todo for test
+(defn info-button1 []
   (let [info [v-box
               :children [[:p.info-heading "Info Popup Heading"]
                          [:p "You can use the " [:span.info-bold "info-bold"] " class to make text bold."]
@@ -138,55 +137,77 @@
                            :label "ClojureScript Cheatsheet"
                            :href "http://cljs.info/cheatsheet"
                            :target "_blank"]
-                          "."]]]
-        color (r/atom "green")]
+                          "."]]]]
     (fn []
-      [:div
+      [info-button
+       :info info])))
 
-       [:div [:input {:type "text"}]]
-       [:div [:input {:type "text" :value "v2"}]]
-       [debug {:a 1 :b 2}]
-       [debug {:username (:username @re-frame.db/app-db)}]
-       [debug {:password (:password @re-frame.db/app-db)}]
-       [debug {:authkey (:authkey @re-frame.db/app-db)}]
-       [debug {:page (:page @re-frame.db/app-db)}]
-       [debug {:firstuser (first (:users @re-frame.db/app-db))}]
-       ;[debug (filter #(not (nil? (re-find (re-pattern "co") (% "email")))) (:users @re-frame.db/app-db))]
+(defn info-button2 []
+  (let [info [v-box
+              :children [[:p "You can touch my github here"]
+                         [:p
+                          [hyperlink-href
+                           :label "Github"
+                           :href "http://www.github.com/colorgmi"
+                           :target "_blank"]]]]]
+    (fn []
+      [info-button
+       :info info])))
 
-       [v-box
-        :children [(doall (for [c ["red" "green" "blue"]]   ;; Notice the ugly "doall"
-                            ^{:key c}                       ;; key should be unique among siblings
-                            [radio-button
-                             :label c
-                             :value c
-                             :model color
-                             :label-style (if (= c @color) {:color       c
-                                                            :font-weight "bold"})
-                             :on-change #(reset! color c)]))]]
+(defn radio1 []
+  (let [color (r/atom "green")]
+    (fn []
+      [v-box
+       :children [(doall (for [c ["red" "green" "blue"]]    ;; Notice the ugly "doall"
+                           ^{:key c}                        ;; key should be unique among siblings
+                           [radio-button
+                            :label c
+                            :value c
+                            :model color
+                            :label-style (if (= c @color) {:color       c
+                                                           :font-weight "bold"})
+                            :on-change #(reset! color c)]))]])))
 
-       [info-button
-        :info info]
+(defn default []                                            ;; todo for test
+  (fn []
+    [:div
 
-       [button
-        :label "Clicke me!"
-        :tooltip "I'm a tooltip!"
-        :tooltip-position :right-center]
+     [:div [:input {:type "text"}]]
+     [:div [:input {:type "text" :value "v2"}]]
+     [debug {:a 1 :b 2}]
+     [debug {:username (:username @re-frame.db/app-db)}]
+     [debug {:password (:password @re-frame.db/app-db)}]
+     [debug {:authkey (:authkey @re-frame.db/app-db)}]
+     [debug {:page (:page @re-frame.db/app-db)}]
+     [debug {:firstuser (first (:users @re-frame.db/app-db))}]
+     ;[debug (filter #(not (nil? (re-find (re-pattern "co") (% "email")))) (:users @re-frame.db/app-db))]
 
-       [debug (first (filter #(= "george.zhu@baichanghui.com" (% "email")) (:users @re-frame.db/app-db)))]
-       ;[:div "default"]
-       ;[reactable (clj->js (let [n 10]
-       ;                      (repeatedly n (fn [] {:Name "ccd" :Age (rand-int n)}))))]
-       ;[highcharts hi-config]
-       ;[:div (str (js/Date. 1473436800000))]
-       [:div (sec-to-format 1472659200)]])))
+     [radio1]
+
+     [info-button1]
+
+     [button
+      :label "Clicke me!"
+      :tooltip "I'm a tooltip!"
+      :tooltip-position :right-center]
+
+     [debug (first (filter #(= "george.zhu@baichanghui.com" (% "email")) (:users @re-frame.db/app-db)))]
+     ;[:div "default"]
+     ;[reactable (clj->js (let [n 10]
+     ;                      (repeatedly n (fn [] {:Name "ccd" :Age (rand-int n)}))))]
+     ;[highcharts hi-config]
+     ;[:div (str (js/Date. 1473436800000))]
+     [:div (sec-to-format 1472659200)]]))
 
 (defn about []
   (fn []
     [:div
-     [:button.btn.btn-default
-      {:on-click (fn [e] (js/console.log (-> e .-target .-innerText)))}
-      "boid"]
 
+     [info-button2]
+
+     ;[:button.btn.btn-default
+     ; {:on-click (fn [e] (js/console.log (-> e .-target .-innerText)))}
+     ; "boid"]
 
      ;[:div.input-group.input-goup-lg
      ; [:span.input-group-addon "Search"]
@@ -205,9 +226,9 @@
      ; [:label.btn.btn-primary
      ;  [:input {:type "radio" :name "options" :id "option2" :autocomplete "off"} "Radio 2"]]
      ; ]
-     "about"]))
 
-
+     ]
+    ))
 
 (defn video []
   (fn []
