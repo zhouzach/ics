@@ -8,6 +8,11 @@
     (:username db)))
 
 (reg-sub
+  :authkey
+  (fn [db]
+    (:authkey db)))
+
+(reg-sub
   :page
   (fn [db]
     (:page db)))
@@ -26,8 +31,3 @@
   :detail-user
   (fn [db]
     (:detail-user db)))
-
-(reg-sub
-  :testin-api-sum
-  (fn [db]
-    (:testin-api-sum db)))

@@ -1,5 +1,10 @@
 (ns ics.views
-  (:require [re-frame.core :as re-frame :refer [subscribe dispatch]]
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [cljs-http.client :as http]
+            [cljs.core.async :refer [chan <! >! put! take!]]
+            [re-frame.core :refer [reg-event-db path reg-sub dispatch subscribe]]
+            [ajax.core :refer [GET POST]]
+            [ics.db :as db]
             [re-com.core :refer [button info-button v-box hyperlink-href radio-button throbber]]
             [reagent.core :as r]
             [cljs-time.core :as t]
@@ -11,7 +16,8 @@
             [ics.common :refer [validate-email sec-to-date date-to-format sec-to-format]]
             [ics.backup-view :refer [about default debug video localvideo highcharts]]
             [cljs.pprint :refer [pprint]]
-            ))
+            [cljs-time.core :as ct]
+            [cljs-time.format :as cf]))
 
 (defn login-in []
   [:form.login {:onSubmit (fn [e]
@@ -222,22 +228,56 @@
        [:pre "付费详情"]
        [highcharts (line-chart-config @user)]])))
 
+(defn async-get
+  [url authkey]
+  (let [ch (chan)]
+    (GET url {:headers {"Auth-Key" authkey}
+              :handler (fn [res] (put! ch res))})
+    ch))
+
 ;; display testin all user's api sum
 (defn testin-api-sum []
-  (let [testin-api-sum (subscribe [:testin-api-sum])]
-    [:div
-     [:div "from_hour: "
-      [:input#from_hour {:type "text"}]
-      [:button.btn.btn-default {:on-click #(set! (.-value (js/document.getElementById "from_hour")) "2016-04-10T17:48:31.953z")} "reset"]]
-     [:div "tooo_hour: "
-      [:input#to_hour {:type "text"}]
-      [:button.btn.btn-default {:on-click #(set! (.-value (js/document.getElementById "to_hour")) "2016-10-10T17:48:31.953z")} "reset"]]
-     [:button.btn.btn-primary {:on-click
-                               #(dispatch [:acc-testin-api
-                                           (.-value (js/document.getElementById "from_hour"))
-                                           (.-value (js/document.getElementById "to_hour"))])}
-      "acc"]
-     [debug @testin-api-sum]]))
+  (let [authkey (subscribe [:authkey])
+        result-sum (r/atom 0)
+        from (r/atom (t/local-date-time 2016 5 25))  ; display "year-month-day" and "local date" => post "utc time"
+        to (r/atom (ct/time-now))
+        ]
+    (fn []
+      [:div
+       [:div "from_hour: "
+        [:input {:type      "date"
+                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @from)
+                 :on-change (fn [e]
+                              (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
+                                (reset! from (t/local-date-time year month day))
+                                (reset! result-sum 0)))}]]
+       [:div "tooo_hour: "
+        [:input {:type      "date"
+                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
+                 :on-change (fn [e]
+                              (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
+                                (reset! to (t/local-date-time year month day))
+                                (reset! result-sum 0)))}]]
+       [:button.btn.btn-primary {:on-click (fn []
+                                             (go
+                                               (let [users ((<! (async-get "http://auth.appadhoc.com/users" @authkey)) "users")
+                                                     testin-users (filter #(= "testin" (% "third_party_from")) users)
+                                                     testin-users-ids (set (map #(% "id") testin-users))
+                                                     apps ((<! (async-get "http://auth.appadhoc.com/apps" @authkey)) "apps")
+                                                     testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
+                                                     testin-apps-ids (map #(% "id") testin-apps)]
+                                                 (doseq [appid testin-apps-ids]
+                                                   (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" appid
+                                                                                "/daily_api_count?"
+                                                                                "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
+                                                                                "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
+                                                                           @authkey))
+                                                             "daily_api_count")
+                                                         nums (map #(% "api_count" 0) v)
+                                                         sum (reduce + nums)]
+                                                     (swap! result-sum #(+ % sum)))))))}
+        "acc"]
+       [debug @result-sum]])))
 
 (defn main []
   (let [page (subscribe [:page])]

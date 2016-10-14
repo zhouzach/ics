@@ -12,6 +12,4 @@
    :apusers     nil
 
    :detail-user nil
-
-   :testin-api-sum nil
    })

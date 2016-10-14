@@ -9,8 +9,9 @@
             [cljsjs.reactable]
             [cljsjs.nprogress]
             [ics.common :refer [validate-email sec-to-date date-to-format sec-to-format]]
+            [ics.common-component :refer [date-component today parse-date]]
             [cljs.pprint :refer [pprint]]
-            ))
+            [cljs-time.core :as ct]))
 
 (defn debug [data]
   [:pre (with-out-str (pprint data))])
@@ -168,36 +169,55 @@
                                                            :font-weight "bold"})
                             :on-change #(reset! color c)]))]])))
 
+(defn little-date []
+  (let [date (r/atom (today))]
+    (fn []
+      [:div
+       [date-component date]
+       [:p @date]])))
+
 (defn default []                                            ;; todo for test
-  (fn []
-    [:div
+  (let [date (r/atom (today))]
+    (fn []
+      [:div
 
-     [:div [:input {:type "text"}]]
-     [:div [:input {:type "text" :value "v2"}]]
-     [debug {:a 1 :b 2}]
-     [debug {:username (:username @re-frame.db/app-db)}]
-     [debug {:password (:password @re-frame.db/app-db)}]
-     [debug {:authkey (:authkey @re-frame.db/app-db)}]
-     [debug {:page (:page @re-frame.db/app-db)}]
-     [debug {:firstuser (first (:users @re-frame.db/app-db))}]
-     ;[debug (filter #(not (nil? (re-find (re-pattern "co") (% "email")))) (:users @re-frame.db/app-db))]
+       ;[date-component date]
+       ;[:p @date]
 
-     [radio1]
+       [debug (ct/now)]
+       [debug (today)]
+       ;[:div (parse-date "2016-09-08")]
 
-     [info-button1]
+       ;[little-date]
 
-     [button
-      :label "Clicke me!"
-      :tooltip "I'm a tooltip!"
-      :tooltip-position :right-center]
+       [:div [:input {:type      "text"
+                      :on-change #(print "input value changed!")}]]
 
-     [debug (first (filter #(= "george.zhu@baichanghui.com" (% "email")) (:users @re-frame.db/app-db)))]
-     ;[:div "default"]
-     ;[reactable (clj->js (let [n 10]
-     ;                      (repeatedly n (fn [] {:Name "ccd" :Age (rand-int n)}))))]
-     ;[highcharts hi-config]
-     ;[:div (str (js/Date. 1473436800000))]
-     [:div (sec-to-format 1472659200)]]))
+       [:div [:input {:type "text" :value "v2"}]]
+       [debug {:a 1 :b 2}]
+       [debug {:username (:username @re-frame.db/app-db)}]
+       [debug {:password (:password @re-frame.db/app-db)}]
+       [debug {:authkey (:authkey @re-frame.db/app-db)}]
+       [debug {:page (:page @re-frame.db/app-db)}]
+       [debug {:firstuser (first (:users @re-frame.db/app-db))}]
+       ;[debug (filter #(not (nil? (re-find (re-pattern "co") (% "email")))) (:users @re-frame.db/app-db))]
+
+       [radio1]
+
+       [info-button1]
+
+       [button
+        :label "Clicke me!"
+        :tooltip "I'm a tooltip!"
+        :tooltip-position :right-center]
+
+       [debug (first (filter #(= "george.zhu@baichanghui.com" (% "email")) (:users @re-frame.db/app-db)))]
+       ;[:div "default"]
+       ;[reactable (clj->js (let [n 10]
+       ;                      (repeatedly n (fn [] {:Name "ccd" :Age (rand-int n)}))))]
+       ;[highcharts hi-config]
+       ;[:div (str (js/Date. 1473436800000))]
+       [:div (sec-to-format 1472659200)]])))
 
 (defn about []
   (fn []

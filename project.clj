@@ -11,7 +11,7 @@
                  [cljsjs/highcharts "4.2.6-0"]              ; no use ?!
                  [cljsjs/reactable "0.12.5-0"]
                  [cljsjs/nprogress "0.2.0-1"]
-                 [com.andrewmcveigh/cljs-time "0.4.0"]
+                 [com.andrewmcveigh/cljs-time "0.5.0-alpha1"]
                  [figwheel-sidecar "0.5.8"]
                  ]
 
