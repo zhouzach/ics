@@ -8,8 +8,7 @@
 (defn offset-today [n] (unparse-date (ct/plus (ct/now) (ct/days n))))
 (defn yesterday [] (offset-today -1))
 
-;; value is a r/atom
-(defn date-component [value]
+(defn date-component [value #_"value is a r/atom"]
   [:input {:type "date"
            :value @value
            :on-change (fn [e]

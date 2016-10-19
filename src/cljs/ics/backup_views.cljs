@@ -181,14 +181,14 @@
     (fn []
       [:div
 
-       ;[date-component date]
-       ;[:p @date]
+       #_[date-component date]
+       #_[:p @date]
 
        [debug (ct/now)]
        [debug (today)]
-       ;[:div (parse-date "2016-09-08")]
+       #_[:div (parse-date "2016-09-08")]
 
-       ;[little-date]
+       #_[little-date]
 
        [:div [:input {:type      "text"
                       :on-change #(print "input value changed!")}]]

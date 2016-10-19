@@ -235,47 +235,50 @@
               :handler (fn [res] (put! ch res))})
     ch))
 
-;; display testin all user's api sum
-(defn testin-api-sum []
+(defn testin-api-sum
+  "display testin all user's api sum,
+   render UI year-month-day and local date,
+   but http get utc time of that date,
+   will send handreds of request to sum this number."
+  []
   (let [authkey (subscribe [:authkey])
         result-sum (r/atom 0)
-        from (r/atom (t/local-date-time 2016 5 25))  ; display "year-month-day" and "local date" => post "utc time"
+        from (r/atom (t/local-date-time 2016 5 25))
         to (r/atom (ct/time-now))
+        reset-input-and-result (fn [e input]
+                                 (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
+                                   (reset! input (t/local-date-time year month day))
+                                   (reset! result-sum 0)))
+        acc-result (fn []
+                     (go
+                       (let [users ((<! (async-get "http://auth.appadhoc.com/users" @authkey)) "users")
+                             testin-users (filter #(= "testin" (% "third_party_from")) users)
+                             testin-users-ids (set (map #(% "id") testin-users))
+                             apps ((<! (async-get "http://auth.appadhoc.com/apps" @authkey)) "apps")
+                             testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
+                             testin-apps-ids (map #(% "id") testin-apps)]
+                         (doseq [appid testin-apps-ids]
+                           (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" appid
+                                                        "/daily_api_count?"
+                                                        "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
+                                                        "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
+                                                   @authkey))
+                                     "daily_api_count")
+                                 nums (map #(% "api_count" 0) v)
+                                 sum (reduce + nums)]
+                             (swap! result-sum #(+ % sum)))))))
         ]
     (fn []
       [:div
        [:div "from_hour: "
         [:input {:type      "date"
                  :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @from)
-                 :on-change (fn [e]
-                              (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
-                                (reset! from (t/local-date-time year month day))
-                                (reset! result-sum 0)))}]]
+                 :on-change #(reset-input-and-result % from)}]]
        [:div "tooo_hour: "
         [:input {:type      "date"
                  :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
-                 :on-change (fn [e]
-                              (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
-                                (reset! to (t/local-date-time year month day))
-                                (reset! result-sum 0)))}]]
-       [:button.btn.btn-primary {:on-click (fn []
-                                             (go
-                                               (let [users ((<! (async-get "http://auth.appadhoc.com/users" @authkey)) "users")
-                                                     testin-users (filter #(= "testin" (% "third_party_from")) users)
-                                                     testin-users-ids (set (map #(% "id") testin-users))
-                                                     apps ((<! (async-get "http://auth.appadhoc.com/apps" @authkey)) "apps")
-                                                     testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
-                                                     testin-apps-ids (map #(% "id") testin-apps)]
-                                                 (doseq [appid testin-apps-ids]
-                                                   (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" appid
-                                                                                "/daily_api_count?"
-                                                                                "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
-                                                                                "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
-                                                                           @authkey))
-                                                             "daily_api_count")
-                                                         nums (map #(% "api_count" 0) v)
-                                                         sum (reduce + nums)]
-                                                     (swap! result-sum #(+ % sum)))))))}
+                 :on-change #(reset-input-and-result % to)}]]
+       [:button.btn.btn-primary {:on-click acc-result}
         "acc"]
        [debug @result-sum]])))
 

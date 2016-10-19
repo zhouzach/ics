@@ -5,7 +5,7 @@
    :username    "limenglong@appadhoc.com"
    ;:username nil
    :password    "a1111111"
-   :authkey     "f196f7ac-f320-4a58-b95e-a91936442495" ;; this is only for dev, notice it will expire
+   :authkey     "fe62abea-ba7a-47f3-a68a-ac2672140b29" ;; this is only for dev, notice it will expire of 7 days
 
    :page        :default
    :users       nil
