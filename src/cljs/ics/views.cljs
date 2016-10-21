@@ -279,8 +279,116 @@
                  :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
                  :on-change #(reset-input-and-result % to)}]]
        [:button.btn.btn-primary {:on-click acc-result}
-        "acc"]
+        "ACC"]
        [debug @result-sum]])))
+
+(defn data-fast-uv []
+  (let [authkey (subscribe [:authkey])
+        result (r/atom nil)
+        from (r/atom (t/local-date-time 2016 9 25))
+        to (r/atom (ct/time-now))
+        appid (r/atom "ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f")
+        select-value (r/atom "monthly")
+        reset-input-and-result (fn [e input]
+                                 (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
+                                   (reset! input (t/local-date-time year month day))
+                                   (reset! result 0)))
+        get-daily-data (fn []
+                         (go
+                           (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" @appid
+                                                        "/daily_uv?"
+                                                        "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
+                                                        "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
+                                                   @authkey))
+                                     "daily_uv")
+                                 nums (map (fn [e] {(e "hour") (e "client_sum")}) v)]
+                             (reset! result nums))))
+        get-monthly-data (fn []
+                           (go
+                             (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" @appid
+                                                          "/monthly_uv?"
+                                                          "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
+                                                          "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
+                                                     @authkey))
+                                       "monthly_uv")
+                                   nums (map (fn [e] {(e "hour") (e "client_sum")}) v)]
+                               (reset! result nums))))
+        ]
+    (fn []
+      [:div
+       [:div "from_hour: "
+        [:input {:type      "date"
+                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @from)
+                 :on-change #(reset-input-and-result % from)}]]
+       [:div "tooo_hour: "
+        [:input {:type      "date"
+                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
+                 :on-change #(reset-input-and-result % to)}]]
+       [:div
+        [:select {:value     @select-value
+                  :on-change (fn [e] (reset! select-value (-> e .-target .-value)))}
+         [:option {:value "monthly"} "monthly"]
+         [:option {:value "daily"} "daily"]]]
+       [:div "appid: "
+        [:input {:type      "text"
+                 :value     @appid
+                 :on-change #(reset! appid (-> % .-target .-value))
+                 }]]
+       [:div
+        [:button.btn.btn-primary {:on-click (fn []
+                                              (if (= @select-value "monthly")
+                                                (get-monthly-data)
+                                                (get-daily-data)))}
+         "GET"]]
+       [debug @result]])))
+
+(defn data-fast-api []
+  (let [authkey (subscribe [:authkey])
+        result (r/atom nil)
+        from (r/atom (t/local-date-time 2016 9 25))
+        to (r/atom (ct/time-now))
+        appid (r/atom "ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f")
+        reset-input-and-result (fn [e input]
+                                 (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
+                                   (reset! input (t/local-date-time year month day))
+                                   (reset! result 0)))
+        get-daily-data (fn []
+                         (go
+                           (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" @appid
+                                                        "/daily_api_count?"
+                                                        "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
+                                                        "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
+                                                   @authkey))
+                                     "daily_api_count")
+                                 nums (let [v2 (map (fn [e] {(e "hour") (e "api_count")}) v)] #_(sum app exps api-count)
+                                        (reduce (fn [acc e]
+                                                  (let [[k v] (first e)]
+                                                    (if (acc k)
+                                                      (assoc acc k (+ v (acc k)))
+                                                      (assoc acc k v))))
+                                                (sorted-map)
+                                                v2))]
+                             (reset! result nums))))
+        ]
+    (fn []
+      [:div
+       [:div "from_hour: "
+        [:input {:type      "date"
+                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @from)
+                 :on-change #(reset-input-and-result % from)}]]
+       [:div "tooo_hour: "
+        [:input {:type      "date"
+                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
+                 :on-change #(reset-input-and-result % to)}]]
+       [:div "appid: "
+        [:input {:type      "text"
+                 :value     @appid
+                 :on-change #(reset! appid (-> % .-target .-value))
+                 }]]
+       [:div
+        [:button.btn.btn-primary {:on-click get-daily-data}
+         "GET"]]
+       [debug @result]])))
 
 (defn main []
   (let [page (subscribe [:page])]
@@ -297,6 +405,8 @@
          :video [video]
          :localvideo [localvideo]
          :testin-api-sum [testin-api-sum]
+         :data-fast-uv [data-fast-uv]
+         :data-fast-api [data-fast-api]
          )])))
 
 (defn main-panel []
@@ -322,6 +432,10 @@
               [:a {:href "#/nav/about"} "About"]]
              [:li {:class (when (= @page :testin-api-sum) "active")}
               [:a {:href "#/nav/testin-api-sum"} "testin-api-sum"]]
+             [:li {:class (when (= @page :data-fast-uv) "active")}
+              [:a {:href "#/nav/data-fast-uv"} "data-fast-uv"]]
+             [:li {:class (when (= @page :data-fast-api) "active")}
+              [:a {:href "#/nav/data-fast-api"} "data-fast-api"]]
              [:li.dropdown
               [:a.dropdown-toggle {:href          "#/nav/default" :data-toggle "dropdown" :role "button"
                                    :aria-haspopup "true" :aria-expanded "false"}
