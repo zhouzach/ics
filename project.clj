@@ -13,6 +13,8 @@
                  [cljsjs/nprogress "0.2.0-1"]
                  [com.andrewmcveigh/cljs-time "0.5.0-alpha1"]
                  [figwheel-sidecar "0.5.8"]
+                 [cljsjs/material-ui "0.16.0-2"] ;; latest release ; no user ?!
+                 [reagent-material-ui "0.2.1"]
                  ]
 
   :plugins [[lein-cljsbuild "1.1.3"]]

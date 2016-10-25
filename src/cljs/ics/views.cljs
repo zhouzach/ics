@@ -17,7 +17,34 @@
             [ics.backup-view :refer [about default debug video localvideo highcharts]]
             [cljs.pprint :refer [pprint]]
             [cljs-time.core :as ct]
-            [cljs-time.format :as cf]))
+            [cljs-time.format :as cf]
+            [reagent-material-ui.core :refer [TextField DatePicker RaisedButton RadioButtonGroup RadioButton
+                                              Table TableBody TableHeader TableHeaderColumn TableRow TableRowColumn
+                                              AppBar AutoComplete]]
+            ))
+
+(defn async-get
+  [url authkey]
+  (let [ch (chan)]
+    (GET url {:headers {"Auth-Key" authkey}
+              :handler (fn [res] (put! ch res))})
+    ch))
+
+(defn test-page []
+  (let [dataSource (r/atom ["ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f"])
+        ;handleUpdateInput #(swap! dataSource conj %)
+        ]
+    (fn []
+      [:div
+
+       [AutoComplete {:dataSource        @dataSource
+                      ;:onUpdateInput handleUpdateInput
+                      ;:filter            (.-noFilter AutoComplete)
+                      ;:openOnFocus       true
+                      :floatingLabelText "AppId"
+                      :fullWidth         true}]
+
+       ])))
 
 (defn login-in []
   [:form.login {:onSubmit (fn [e]
@@ -228,13 +255,6 @@
        [:pre "付费详情"]
        [highcharts (line-chart-config @user)]])))
 
-(defn async-get
-  [url authkey]
-  (let [ch (chan)]
-    (GET url {:headers {"Auth-Key" authkey}
-              :handler (fn [res] (put! ch res))})
-    ch))
-
 (defn testin-api-sum
   "display testin all user's api sum,
    render UI year-month-day and local date,
@@ -285,17 +305,14 @@
 (defn data-fast-uv []
   (let [authkey (subscribe [:authkey])
         result (r/atom nil)
+        clear #(reset! result nil)
+        appidSource ["ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f"]
+        selected-radio-value (r/atom "monthly")
         from (r/atom (t/local-date-time 2016 9 25))
         to (r/atom (ct/time-now))
-        appid (r/atom "ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f")
-        select-value (r/atom "monthly")
-        reset-input-and-result (fn [e input]
-                                 (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
-                                   (reset! input (t/local-date-time year month day))
-                                   (reset! result 0)))
         get-daily-data (fn []
                          (go
-                           (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" @appid
+                           (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" (.-value (js/document.getElementById "appid"))
                                                         "/daily_uv?"
                                                         "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
                                                         "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
@@ -305,7 +322,7 @@
                              (reset! result nums))))
         get-monthly-data (fn []
                            (go
-                             (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" @appid
+                             (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" (.-value (js/document.getElementById "appid"))
                                                           "/monthly_uv?"
                                                           "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
                                                           "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
@@ -316,31 +333,54 @@
         ]
     (fn []
       [:div
-       [:div "from_hour: "
-        [:input {:type      "date"
-                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @from)
-                 :on-change #(reset-input-and-result % from)}]]
-       [:div "tooo_hour: "
-        [:input {:type      "date"
-                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
-                 :on-change #(reset-input-and-result % to)}]]
-       [:div
-        [:select {:value     @select-value
-                  :on-change (fn [e] (reset! select-value (-> e .-target .-value)))}
-         [:option {:value "monthly"} "monthly"]
-         [:option {:value "daily"} "daily"]]]
-       [:div "appid: "
-        [:input {:type      "text"
-                 :value     @appid
-                 :on-change #(reset! appid (-> % .-target .-value))
-                 }]]
-       [:div
-        [:button.btn.btn-primary {:on-click (fn []
-                                              (if (= @select-value "monthly")
-                                                (get-monthly-data)
-                                                (get-daily-data)))}
-         "GET"]]
-       [debug @result]])))
+       [AutoComplete {:id "appid"
+                      :dataSource        appidSource
+                      :floatingLabelText "AppId"
+                      :fullWidth         true}]
+
+       [:p]
+
+       [RadioButtonGroup {:defaultSelected @selected-radio-value
+                          :onChange        (fn [event value]
+                                             (reset! selected-radio-value value)
+                                             (clear))}
+        [RadioButton {:value "monthly" :label "Monthly"}]
+        [RadioButton {:value "daily" :label "Daily"}]]
+
+       [DatePicker {:defaultDate       @from
+                    :onChange          (fn [_ date]
+                                         (reset! from date)
+                                         (clear))
+                    :floatingLabelText "from"}]
+
+       [DatePicker {:defaultDate       @to
+                    :onChange          (fn [_ date]
+                                         (reset! to date)
+                                         (clear))
+                    :floatingLabelText "to"}]
+
+       [RaisedButton {:label     "GET DATA"
+                      :secondary true
+                      :on-click  (fn []
+                                   (case @selected-radio-value
+                                     "monthly" (get-monthly-data)
+                                     "daily" (get-daily-data)))}]
+
+       [Table {:selectable false}
+        [TableHeader {:displaySelectAll  false
+                      :adjustForCheckbox false}
+         [TableRow
+          [TableHeaderColumn "Date"]
+          [TableHeaderColumn "Number"]]]
+        [TableBody {:displayRowCheckbox false
+                    :showRowHover       true}
+         (for [r @result
+               :let [d (first r)]]
+           [TableRow
+            [TableRowColumn (key d)]
+            [TableRowColumn (val d)]])]]
+
+       ])))
 
 (defn data-fast-api []
   (let [authkey (subscribe [:authkey])
@@ -407,6 +447,7 @@
          :testin-api-sum [testin-api-sum]
          :data-fast-uv [data-fast-uv]
          :data-fast-api [data-fast-api]
+         :test [test-page]
          )])))
 
 (defn main-panel []
@@ -418,6 +459,9 @@
          [:div.page-header [:h1 "ICS"]]
          [:div.jumbotron [login-in]]]
         [:div.container
+
+         [AppBar {:title "ICS"}]
+
          [:nav.navbar.navbar-default
           [:div.container-fluid
            [:div.collapse.navbar-collapse
@@ -436,6 +480,8 @@
               [:a {:href "#/nav/data-fast-uv"} "data-fast-uv"]]
              [:li {:class (when (= @page :data-fast-api) "active")}
               [:a {:href "#/nav/data-fast-api"} "data-fast-api"]]
+             [:li {:class (when (= @page :test) "active")}
+              [:a {:href "#/nav/test"} "test"]]
              [:li.dropdown
               [:a.dropdown-toggle {:href          "#/nav/default" :data-toggle "dropdown" :role "button"
                                    :aria-haspopup "true" :aria-expanded "false"}
