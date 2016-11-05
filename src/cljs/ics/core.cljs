@@ -16,7 +16,7 @@
 
 ;; -- Routes and History -------
 (defroute "/" [] (dispatch [:page :default]))
-(defroute "/user/:id" [id] (dispatch [:user id]))
+(defroute "/detail-user/:id" [id] (dispatch [:detail-user id]))
 (defroute "/nav/:page" [page] (dispatch [:page (keyword page)]))
 
 (def history

@@ -25,7 +25,6 @@
               :x    -20}
    :xAxis    {:categories ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"]}
    :yAxis    {:title     {:text "数量"}
-              :min       0
               :plotLines [{:value 0 :width 1 :color "#808080"}]}
    :tooltip  {:valueSuffix "C"}
    :legend   {:layout        "vertial"
@@ -100,219 +99,37 @@
                     :value    (:text @state)}]
            [:button (str "Add #" (count (:items @state)))]]])})))
 
-(defn reactable [data]
-  [:div
-   [:> Reactable.Table
-    {:className       "table table-bordered table-striped"
-     :data            data
-     :itemsPerPage    6
-     :pageButtonLimit 5
-     :filterable      (clj->js [:Name :Age])
-     :sortable        true
-     }
-    ;[:> Reactable.Tr
-    ; [:> Reactable.Td {:column "Name" :data "Griff"} "Griff"]
-    ; [:> Reactable.Td {:column "Age"} 18]]
-    ;[:> Reactable.Tr
-    ; [:> Reactable.Td {:column "Name"} "Sale"]
-    ; [:> Reactable.Td {:column "Age"} 98]]
-    ]
-   ]
-  )
+(defn highcharts [config]
+  (r/create-class
+    {:reagent-render
+     (fn []
+       [:div
+        {:style {:min-width "800px" :max-width "2000px"
+                 :height    "400px" :margin "0 auto"}}
+        ])
+     :component-did-mount
+     (fn [this]
+       (js/Highcharts.Chart. (r/dom-node this) (clj->js config)))}))
 
-(defn info-button1 []
-  (let [info [v-box
-              :children [[:p.info-heading "Info Popup Heading"]
-                         [:p "You can use the " [:span.info-bold "info-bold"] " class to make text bold."]
-                         [:p "Use the " [:span.info-bold "code"] " element to display source code:"]
-                         [:code
-                          "(defn square [n] (* n n))" [:br]
-                          "=> #'user/square" [:br]
-                          "(square 45)" [:br]
-                          "=> 2025" [:br]
-                          ]
-                         [:p.info-subheading "Sub heading"]
-                         [:p
-                          "Note: Styles copied from "
-                          [hyperlink-href
-                           :label "ClojureScript Cheatsheet"
-                           :href "http://cljs.info/cheatsheet"
-                           :target "_blank"]
-                          "."]]]]
-    (fn []
-      [info-button
-       :info info])))
-
-(defn info-button2 []
-  (let [info [v-box
-              :children [[:p "You can touch my github here"]
-                         [:p
-                          [hyperlink-href
-                           :label "Github"
-                           :href "http://www.github.com/colorgmi"
-                           :target "_blank"]]]]]
-    (fn []
-      [info-button
-       :info info])))
-
-(defn radio1 []
-  (let [color (r/atom "green")]
-    (fn []
-      [v-box
-       :children [(doall (for [c ["red" "green" "blue"]]    ;; Notice the ugly "doall"
-                           ^{:key c}                        ;; key should be unique among siblings
-                           [radio-button
-                            :label c
-                            :value c
-                            :model color
-                            :label-style (if (= c @color) {:color       c
-                                                           :font-weight "bold"})
-                            :on-change #(reset! color c)]))]])))
-
-(defn little-date []
+(defn default []
   (let [date (r/atom (today))]
     (fn []
       [:div
-       [date-component date]
-       [:p @date]])))
-
-(defn default []                                            ;; todo for test
-  (let [date (r/atom (today))]
-    (fn []
-      [:div
-
-       #_[date-component date]
-       #_[:p @date]
-
-       [debug (ct/now)]
-       [debug (today)]
-       #_[:div (parse-date "2016-09-08")]
-
-       #_[little-date]
-
-       [:div [:input {:type      "text"
-                      :on-change #(print "input value changed!")}]]
-
-       [:div [:input {:type "text" :value "v2"}]]
-       [debug {:a 1 :b 2}]
+       [:h2 "Default"]
+       ;[debug (ct/now)]
+       ;[debug (today)]
+       ;[debug {:a 1 :b 2}]
        [debug {:username (:username @re-frame.db/app-db)}]
+       [debug {:detail-user-info (:detail-user-info @re-frame.db/app-db)}]
        [debug {:password (:password @re-frame.db/app-db)}]
        [debug {:authkey (:authkey @re-frame.db/app-db)}]
        [debug {:page (:page @re-frame.db/app-db)}]
-       [debug {:firstuser (first (:users @re-frame.db/app-db))}]
-       ;[debug (filter #(not (nil? (re-find (re-pattern "co") (% "email")))) (:users @re-frame.db/app-db))]
-
-       [radio1]
-
-       [info-button1]
-
-       [button
-        :label "Clicke me!"
-        :tooltip "I'm a tooltip!"
-        :tooltip-position :right-center]
-
-       [debug (first (filter #(= "george.zhu@baichanghui.com" (% "email")) (:users @re-frame.db/app-db)))]
-       ;[:div "default"]
-       ;[reactable (clj->js (let [n 10]
-       ;                      (repeatedly n (fn [] {:Name "ccd" :Age (rand-int n)}))))]
-       ;[highcharts hi-config]
-       ;[:div (str (js/Date. 1473436800000))]
-       [:div (sec-to-format 1472659200)]])))
-
-(defn about []
-  (fn []
-    [:div
-
-     [info-button2]
-
-     ;[:button.btn.btn-default
-     ; {:on-click (fn [e] (js/console.log (-> e .-target .-innerText)))}
-     ; "boid"]
-
-     ;[:div.input-group.input-goup-lg
-     ; [:span.input-group-addon "Search"]
-     ; [:input.form-control {:type "text" :placeholder "Search"}]]
-
-     ;[:form
-     ; [:input {:type "radio" :checked "true" :name "A"}]
-     ; [:input {:type "radio" :name "B"}]
-     ; ]
-
-     ;[:div "dfdf"]
-
-     ;[:div.btn-group {:data-toggle "buttons"}
-     ; [:label.btn.btn-primary.active
-     ;  [:input {:type "radio" :name "options" :id "option1" :autocomplete "off" :checked "checked"} "Radio 1 (preselected)"]]
-     ; [:label.btn.btn-primary
-     ;  [:input {:type "radio" :name "options" :id "option2" :autocomplete "off"} "Radio 2"]]
-     ; ]
-
-     ]
-    ))
+       [highcharts hi-config]
+       ]
+       )))
 
 (defn video []
   (fn []
     [:div.embed-responsive.embed-responsive-16by9
      [:iframe.embed-responsive-item {:src "https://www.youtube.com/embed/Q6omsDyFNlk"}]] ;; notice this is embed video
     ))
-
-(defn localvideo []
-  (fn []
-    [:video {:src      "SongOfTheSea/SongOfTheSea.mp4"
-             :controls "controls"
-             :width    "720"
-             :height   "480"}]))
-
-
-(defn users-table2 []
-  (let [users (subscribe [:users])]
-    (fn []
-      [:div.panel.panel-default
-       [:div.panel-heading "Panel heading"]
-       [:div.panel-body
-        [:p "blabla"]]
-       [:table.table.table-bordered.table-striped.table-condensed.table-responsive
-        [:thead
-         [:tr
-          [:th "账户"]
-          [:th "创建日期"]
-          [:th "注册来源"]
-          [:th "手机号"]
-          [:th "黑名单"]
-          [:th "API"]
-          [:th "MAU"]
-          [:td "付费详情"]]]
-        [:tbody
-         (for [u @users]
-           [:tr
-            [:td (u "email")]
-            [:td (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (u "created_at"))))]
-            [:td ((u "operation_info") "from")]
-            [:td ((u "operation_info") "phone")]
-            [:td [:button.btn.btn-primary {:on-click #(js/console.log "拉黑")} "拉黑"]]
-            [:td (last (last (u "api")))]
-            [:td (last (last (u "mau")))]
-            [:td [:a {:href (str "#/user/" (u "id"))} "付费详情"]]])]]
-       [:div.panel-body
-        [:button.btn.btn-default "click me!"]]])))
-
-; [rich-table data]
-(comment
-  (defn rich-table [data]                                   ;; add page nav buttons
-    [:table.table.table-bordered.table-striped
-     [:thead>tr
-      (for [th (keys (first data))]
-        [:th (str th)])
-      [:tbody
-       (for [d data]
-         [:tr [:td (val d)]])]]]))
-
-(defn highcharts [config]
-  (r/create-class
-    {:reagent-render
-     (fn []
-       [:div {:style {:min-width "310px" :max-width "2000px"
-                      :height    "400px" :margin "0 auto"}}])
-     :component-did-mount
-     (fn [this]
-       (js/Highcharts.Chart. (r/dom-node this) (clj->js config)))}))

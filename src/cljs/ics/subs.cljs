@@ -28,6 +28,6 @@
     (:apusers db)))
 
 (reg-sub
-  :detail-user
+  :detail-user-info
   (fn [db]
-    (:detail-user db)))
+    (:detail-user-info db)))

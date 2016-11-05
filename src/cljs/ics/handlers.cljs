@@ -51,9 +51,9 @@
     (assoc db :apusers value)))
 
 (reg-event-db
-  :detail-user
+  :detail-user-info
   (fn [db [_ value]]
-    (assoc db :detail-user value)))
+    (assoc db :detail-user-info value)))
 
 (reg-event-db
   :testin-api-sum
@@ -77,48 +77,14 @@
         nil))
     (assoc db :page value)))
 
-
-
-;; how to write sync code?
-;(defn sync-get
-;  [url authkey]
-;  (let [r (atom nil)]
-;    (GET url {:headers {"Auth-Key" authkey}
-;              :handler (fn [res] (reset! r res))})
-;    @r))
-
-
-
-;(reg-event-db
-;  :acc-testin-api
-;  (fn [db [_ from_hour to_hour]]
-;    (let [authkey (:authkey db)]
-;      (let [users ((sync-get "http://auth.appadhoc.com/users" authkey) "users")
-;            _ (print "d1:" (count users))
-;            testin-users (filter #(= "testin" (% "third_party_from")) users)
-;            testin-users-ids (set (map #(% "id") testin-users))
-;            apps ((sync-get "http://auth.appadhoc.com/apps" authkey) "apps")
-;            testin-apps (filter #(contains? testin-users-ids (% "author_id")) apps)
-;            testin-apps-ids (map #(% "id") testin-apps)
-;            all (atom 0)]
-;        (doseq [appid testin-apps-ids]
-;          (let [v ((sync-get (str "http://data.appadhoc.com/apps/" appid
-;                                  "/daily_api_count?"
-;                                  "from_hour=" from_hour
-;                                  "&to_hour=" to_hour)
-;                             authkey)
-;                    "daily_api_count")
-;                nums (map #(% "api_count" 0) v)
-;                sum (reduce + nums)]
-;            (swap! all #(+ % sum))
-;            (dispatch [:testin-api-sum @all])))))
-;    db))
-
 (reg-event-db
-  :user
+  :detail-user
   (fn [db [_ id]]
+    (print "de3:" id)
     (GET
       (str "http://auth.appadhoc.com/user/" id)
       {:headers {"Auth-Key" (:authkey db)}
-       :handler #(dispatch [:detail-user %])})
-    (assoc db :page :user)))
+       :handler (fn [res]
+                  (dispatch [:detail-user-info res])
+                  )})
+    (assoc db :page :detail-user)))

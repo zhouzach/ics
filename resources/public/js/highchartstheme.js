@@ -1,45 +1,42 @@
 /**
- * Sand-Signika theme for Highcharts JS
+ * (c) 2010-2016 Torstein Honsi
+ *
+ * License: www.highcharts.com/license
+ *
+ * Grid-light theme for Highcharts JS
  * @author Torstein Honsi
  */
 
+'use strict';
+import Highcharts from '../parts/Globals.js';
+/* global document */
 // Load the fonts
 Highcharts.createElement('link', {
-    href: 'https://fonts.googleapis.com/css?family=Signika:400,700',
+    href: 'https://fonts.googleapis.com/css?family=Dosis:400,600',
     rel: 'stylesheet',
     type: 'text/css'
 }, null, document.getElementsByTagName('head')[0]);
 
-// Add the background image to the container
-Highcharts.wrap(Highcharts.Chart.prototype, 'getContainer', function (proceed) {
-    proceed.call(this);
-    this.container.style.background = 'url(http://www.highcharts.com/samples/graphics/sand.png)';
-});
-
-
 Highcharts.theme = {
-    colors: ["#f45b5b", "#8085e9", "#8d4654", "#7798BF", "#aaeeee", "#ff0066", "#eeaaee",
-        "#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
+    colors: ['#7cb5ec', '#f7a35c', '#90ee7e', '#7798BF', '#aaeeee', '#ff0066', '#eeaaee',
+        '#55BF3B', '#DF5353', '#7798BF', '#aaeeee'],
     chart: {
         backgroundColor: null,
         style: {
-            fontFamily: "Signika, serif"
+            fontFamily: 'Dosis, sans-serif'
         }
     },
     title: {
         style: {
-            color: 'black',
             fontSize: '16px',
-            fontWeight: 'bold'
-        }
-    },
-    subtitle: {
-        style: {
-            color: 'black'
+            fontWeight: 'bold',
+            textTransform: 'uppercase'
         }
     },
     tooltip: {
-        borderWidth: 0
+        borderWidth: 0,
+        backgroundColor: 'rgba(219,219,216,0.8)',
+        shadow: false
     },
     legend: {
         itemStyle: {
@@ -48,55 +45,35 @@ Highcharts.theme = {
         }
     },
     xAxis: {
+        gridLineWidth: 1,
         labels: {
             style: {
-                color: '#6e6e70'
+                fontSize: '12px'
             }
         }
     },
     yAxis: {
+        minorTickInterval: 'auto',
+        title: {
+            style: {
+                textTransform: 'uppercase'
+            }
+        },
         labels: {
             style: {
-                color: '#6e6e70'
+                fontSize: '12px'
             }
         }
     },
     plotOptions: {
-        series: {
-            shadow: true
-        },
         candlestick: {
             lineColor: '#404048'
-        },
-        map: {
-            shadow: false
         }
     },
 
-    // Highstock specific
-    navigator: {
-        xAxis: {
-            gridLineColor: '#D0D0D8'
-        }
-    },
-    rangeSelector: {
-        buttonTheme: {
-            fill: 'white',
-            stroke: '#C0C0C8',
-            'stroke-width': 1,
-            states: {
-                select: {
-                    fill: '#D0D0D8'
-                }
-            }
-        }
-    },
-    scrollbar: {
-        trackBorderColor: '#C0C0C8'
-    },
 
     // General
-    background2: '#E0E0E8'
+    background2: '#F0F0EA'
 
 };
 

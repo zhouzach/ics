@@ -14,13 +14,14 @@
             [cljsjs.reactable]
             [cljsjs.nprogress]
             [ics.common :refer [validate-email sec-to-date date-to-format sec-to-format]]
-            [ics.backup-view :refer [about default debug video localvideo highcharts]]
+            [ics.backup-view :refer [default debug video highcharts]]
             [cljs.pprint :refer [pprint]]
             [cljs-time.core :as ct]
             [cljs-time.format :as cf]
             [reagent-material-ui.core :refer [TextField DatePicker RaisedButton RadioButtonGroup RadioButton
                                               Table TableBody TableHeader TableHeaderColumn TableRow TableRowColumn
-                                              AppBar AutoComplete]]
+                                              AppBar AutoComplete MenuItem Menu Paper
+                                              Tabs Tab LeftNav]] #_(LeftNav is Drawer)
             ))
 
 (defn async-get
@@ -30,20 +31,16 @@
               :handler (fn [res] (put! ch res))})
     ch))
 
-(defn test-page []
-  (let [dataSource (r/atom ["ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f"])
-        ;handleUpdateInput #(swap! dataSource conj %)
-        ]
+(defn mytest []
+  (let [state (r/atom false)]
     (fn []
       [:div
+       [:h2 "MY-TEST"]
+       [RaisedButton {:label      "Toggle Drawer"
+                      :onTouchTap #(swap! state not)}]
 
-       [AutoComplete {:dataSource        @dataSource
-                      ;:onUpdateInput handleUpdateInput
-                      ;:filter            (.-noFilter AutoComplete)
-                      ;:openOnFocus       true
-                      :floatingLabelText "AppId"
-                      :fullWidth         true}]
-
+       [MenuItem "Menu Item"]
+       [MenuItem "Menu Item2"]
        ])))
 
 (defn login-in []
@@ -58,165 +55,67 @@
    [:p "password: " [:input {:type "password" :placeholder "password" :id "password"}] [:br]]
    [:p [:input {:type "submit" :value "login" :class "btn bt-default btn-lg"}]] [:br]])
 
-(defn users-table [config]
-  (let [page (:page config)
-        items-per-page (:items-per-page config)
-        search (:search config)
-        users (subscribe [:users])
-        ;users @users
-        ;
-        ;;users (filter (fn [u]
-        ;;                (boolean
-        ;;                  (re-find (re-pattern search) (u "email"))))
-        ;;              users)
-        ;
-        ;users (subvec users
-        ;              (* items-per-page (dec page))
-        ;              (* items-per-page page))
-        ]
+(defn users-table []
+  (let [users (subscribe [:users])
+        _ (print "deok" @users)]
     (fn []
-      [:div.panel.panel-default
-       [:div.panel-heading "Panel heading"]
-       [:div.panel-body
-        [:p "blabla"]]
-       [:table.table.table-bordered.table-striped.table-condensed.table-responsive
-        [:thead
-         [:tr
-          [:th "账户"]
-          [:th "创建日期"]
-          [:th "注册来源"]
-          [:th "手机号"]
-          [:th "黑名单"]
-          [:th "API"]
-          [:th "MAU"]
-          [:td "付费详情"]]]
-        [:tbody
-         (for [u (take 10 @users)]
-           [:tr
-            [:td (u "email")]
-            [:td (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (u "created_at"))))]
-            [:td ((u "operation_info") "from")]
-            [:td ((u "operation_info") "phone")]
-            [:td [:button.btn.btn-primary {:on-click #(js/console.log "拉黑")} "拉黑"]]
-            [:td (last (last (u "api")))]
-            [:td (last (last (u "mau")))]
-            [:td [:a {:href (str "#/user/" (u "id"))} "付费详情"]]])]]
-       [:div.panel-body
-        [:button.btn.btn-default "click me!"]]])))
+      [:div
+       [:h2 "USERS"]
+       [Table {:selectable false}
+        [TableHeader {:displaySelectAll  false
+                      :adjustForCheckbox false}
+         [TableRow
+          [TableHeaderColumn "账户"]
+          [TableHeaderColumn "创建日期"]
+          [TableHeaderColumn "手机号"]
+          [TableHeaderColumn "API"]
+          [TableHeaderColumn "MAU"]
+          [TableHeaderColumn "黑名单"]
+          [TableHeaderColumn "付费详情"]]]
+        [TableBody {:displayRowCheckbox false
+                    :showRowHover       true}
+         (for [u @users]
+           [TableRow
+            [TableRowColumn (u "email")]
+            [TableRowColumn (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (u "created_at"))))]
+            [TableRowColumn ((u "operation_info") "phone")]
+            [TableRowColumn (last (last (u "api")))]
+            [TableRowColumn (last (last (u "mau")))]
+            [TableRowColumn [RaisedButton {:label "拉黑" :on-click #(print "拉黑")}]]
+            [TableRowColumn [:a {:href (str "#/detail-user/" (u "id"))
+                                 :target "_blank"} "付费详情"]]])]]])))
 
 (defn apusers-table []
   (let [apusers (subscribe [:apusers])]
     (fn []
-      [:table.table.table-bordered.table-striped
-       [:thead
-        [:tr
-         [:th "申请时间"]
-         [:th "公司 / 产品"]
-         [:th "姓名"]
-         [:th "邮件"]
-         [:th "手机号"]
-         [:th "MAU"]
-         [:th "发送邀请码"]
-         [:th "丢弃"]
-         [:th "处理状态"]]]
-       [:tbody
-        (for [u (take 10 @apusers)]
-          ;(for [u @apusers]
-          [:tr
-           [:td (u "created_at")]
-           [:td (u "company")]
-           [:td (u "name")]
-           [:td (u "email")]
-           [:td (u "phone")]
-           [:td (u "mau")]
-           [:td [:button.btn.btn-primary {:on-click #(println "send1")} "发送"]]
-           ;[:td [:button.btn.btn-primary {:on-click #(println "send2")} "丢弃"]]
-           [:td [button
-                 :class "btn btn-primary"
-                 :label "丢弃"
-                 :tooltip "小心!"
-                 :tooltip-position :right-center
-                 :on-click #(println "丢弃")]]
-           [:td (u "discard")]])]])))
-
-(defn apusers-table2 []
-  (let [apusers (subscribe [:apusers])
-        page-num (r/atom 1)
-        items-per-page 10
-        search (r/atom "")
-        ]
-    (r/create-class
-      {:reagent-render
-       (fn []
-         [:div.container
-          [:div.input-group.input-goup-lg
-           [:span.input-group-addon "Search"]
-           [:input.form-control
-            {:type      "text" :placeholder "Search" :value @search
-             :on-change (fn [e]
-                          (js/console.log (-> e .-target .-value))
-                          (reset! search (-> e .-target .-value))
-                          (dispatch [:apusers {"applied_users"
-                                               (filter (fn [apuser]
-                                                         (boolean
-                                                           (or
-                                                             (re-find (re-pattern @search) (get apuser "company"))
-                                                             (re-find (re-pattern @search) (get apuser "name")))))
-                                                       @apusers)}]))}]]
-          [:table.table.table-bordered.table-striped
-           [:thead
-            [:tr
-             [:th "申请时间"]
-             [:th "公司 / 产品"]
-             [:th "姓名"]
-             [:th "邮件"]
-             [:th "手机号"]
-             [:th "MAU"
-              [:span [:button.btn.btn-default
-                      {:on-click #(dispatch [:apusers {"applied_users"
-                                                       (sort-by (fn [e] (get e "mau")) @apusers)}])}
-                      "降序"]]]
-             [:th "发送邀请码"]
-             [:th "丢弃"]
-             [:th "处理状态"]]]
-           [:tbody
-            (for [apuser
-                  ;(subvec
-                  ;  (filter (fn [apuser]
-                  ;            (boolean (or
-                  ;                       (re-find (re-pattern @search) (get apuser "company"))
-                  ;                       (re-find (re-pattern @search) (get apuser "name"))
-                  ;                       )))
-                  ;          @apusers)
-                  ;  ;@apusers
-                  ;  (* items-per-page (dec @page-num))
-                  ;  (* items-per-page @page-num)
-                  ;  )
-
-                  (filter (fn [apuser]
-                            (boolean (or
-                                       (re-find (re-pattern @search) (get apuser "company"))
-                                       (re-find (re-pattern @search) (get apuser "name"))
-                                       )))
-                          @apusers)
-                  ]
-              [:tr
-               [:td (get apuser "created_at")]
-               [:td (get apuser "company")]
-               [:td (get apuser "name")]
-               [:td (get apuser "email")]
-               [:td (get apuser "mobile")]
-               [:td (get apuser "mau")]
-               [:td [:button.btn.btn-primary {:on-click #(js/console.log "send1")} "发送"]]
-               [:td [:button.btn.btn-primary {:on-click #(js/console.log "send2")} "丢弃"]]
-               [:td (get apuser "discard")]])]]
-          (for [i (range 1 (js/Math.floor (/ (count @apusers) items-per-page)))]
-            [:span [:button.btn.btn-default
-                    {:on-click #(reset! page-num (js/parseInt (-> % .-target .-innerText)))}
-                    (str i)]])
-          ]
-         )
-       })))
+      [:div
+       [:h2 "APUSERS"]
+       [Table {:selectable false}
+        [TableHeader {:displaySelectAll  false
+                      :adjustForCheckbox false}
+         [TableRow
+          [TableHeaderColumn "申请时间"]
+          [TableHeaderColumn "公司 / 产品"]
+          [TableHeaderColumn "姓名"]
+          [TableHeaderColumn "邮件"]
+          [TableHeaderColumn "手机号"]
+          [TableHeaderColumn "MAU"]
+          [TableHeaderColumn "发送邀请码"]
+          [TableHeaderColumn "丢弃"]
+          [TableHeaderColumn "处理状态"]]]
+        [TableBody {:displayRowCheckbox false
+                    :showRowHover       true}
+         (for [u @apusers]
+           [TableRow
+            [TableRowColumn (u "created_at")]
+            [TableRowColumn (u "company")]
+            [TableRowColumn (u "name")]
+            [TableRowColumn (u "email")]
+            [TableRowColumn (u "phone")]
+            [TableRowColumn (u "mau")]
+            [TableRowColumn [RaisedButton {:label "发送" :on-click #(println "发送")}]]
+            [TableRowColumn [RaisedButton {:label "丢弃" :on-click #(println "丢弃")}]]
+            [TableRowColumn (u "discard")]])]]])))
 
 (defn line-chart-config [user]
   (let [api (user "api")
@@ -248,12 +147,14 @@
      ;:series   (vec (cons api-series pay-series)) ; todo not fit of string "2016-10-10"
      :series   [api-series]}))
 
-(defn user-graph []
-  (let [user (subscribe [:detail-user])]
+(defn detail-user-graph []
+  (let [detail-user-info (subscribe [:detail-user-info])
+        _ (print "de4:" @detail-user-info)]
     (fn []
       [:div
-       [:pre "付费详情"]
-       [highcharts (line-chart-config @user)]])))
+       [:h2 "付费详情"]
+       (when @detail-user-info #_(this when clause is very important otherwise error)
+         [highcharts (line-chart-config @detail-user-info)])])))
 
 (defn testin-api-sum
   "display testin all user's api sum,
@@ -263,12 +164,9 @@
   []
   (let [authkey (subscribe [:authkey])
         result-sum (r/atom 0)
+        clear #(reset! result-sum 0)
         from (r/atom (t/local-date-time 2016 5 25))
         to (r/atom (ct/time-now))
-        reset-input-and-result (fn [e input]
-                                 (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
-                                   (reset! input (t/local-date-time year month day))
-                                   (reset! result-sum 0)))
         acc-result (fn []
                      (go
                        (let [users ((<! (async-get "http://auth.appadhoc.com/users" @authkey)) "users")
@@ -290,23 +188,30 @@
         ]
     (fn []
       [:div
-       [:div "from_hour: "
-        [:input {:type      "date"
-                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @from)
-                 :on-change #(reset-input-and-result % from)}]]
-       [:div "tooo_hour: "
-        [:input {:type      "date"
-                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
-                 :on-change #(reset-input-and-result % to)}]]
-       [:button.btn.btn-primary {:on-click acc-result}
-        "ACC"]
+       [:h2 "TESTIN-API"]
+       [DatePicker {:defaultDate @from
+                    :floatingLabelText "from"
+                    :onChange (fn [_ date]
+                                (reset! from date)
+                                (clear))}]
+       [DatePicker {:defaultDate @to
+                    :floatingLabelText "from"
+                    :onChange (fn [_ date]
+                                (reset! to date)
+                                (clear))}]
+       [RaisedButton {:label "GET DATA"
+                      :secondary true
+                      :on-click acc-result}]
+       [:p]
        [debug @result-sum]])))
 
 (defn data-fast-uv []
   (let [authkey (subscribe [:authkey])
         result (r/atom nil)
         clear #(reset! result nil)
-        appidSource ["ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f"]
+        appidSource ["ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f"
+                     "c32e989f-5d8e-4b92-a00a-5ca1752a808d"
+                     "b5047bfb-928d-4e9b-a194-4349d2777044"]
         selected-radio-value (r/atom "monthly")
         from (r/atom (t/local-date-time 2016 9 25))
         to (r/atom (ct/time-now))
@@ -333,7 +238,8 @@
         ]
     (fn []
       [:div
-       [AutoComplete {:id "appid"
+       [:h2 "UV"]
+       [AutoComplete {:id                "appid"
                       :dataSource        appidSource
                       :floatingLabelText "AppId"
                       :fullWidth         true}]
@@ -359,6 +265,8 @@
                                          (clear))
                     :floatingLabelText "to"}]
 
+       [:p]
+
        [RaisedButton {:label     "GET DATA"
                       :secondary true
                       :on-click  (fn []
@@ -380,21 +288,22 @@
             [TableRowColumn (key d)]
             [TableRowColumn (val d)]])]]
 
+       [debug @result]
+
        ])))
 
 (defn data-fast-api []
   (let [authkey (subscribe [:authkey])
         result (r/atom nil)
+        clear #(reset! result nil)
         from (r/atom (t/local-date-time 2016 9 25))
         to (r/atom (ct/time-now))
-        appid (r/atom "ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f")
-        reset-input-and-result (fn [e input]
-                                 (let [[year month day] (map js/parseInt (clojure.string/split (-> e .-target .-value) #"-"))]
-                                   (reset! input (t/local-date-time year month day))
-                                   (reset! result 0)))
+        appidSource ["ac66bf61-7608-4a5f-9bc4-9e7cf0f9694f"
+                     "c32e989f-5d8e-4b92-a00a-5ca1752a808d"
+                     "b5047bfb-928d-4e9b-a194-4349d2777044"]
         get-daily-data (fn []
                          (go
-                           (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" @appid
+                           (let [v ((<! (async-get (str "http://data.appadhoc.com/apps/" (.-value (js/document.getElementById "appid"))
                                                         "/daily_api_count?"
                                                         "from_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @from))
                                                         "&to_hour=" (f/unparse (f/formatters :date-time) (t/to-utc-time-zone @to)))
@@ -407,27 +316,47 @@
                                                       (assoc acc k (+ v (acc k)))
                                                       (assoc acc k v))))
                                                 (sorted-map)
-                                                v2))]
+                                                v2))
+                                 nums (into [] nums)
+                                 ]
                              (reset! result nums))))
         ]
     (fn []
       [:div
-       [:div "from_hour: "
-        [:input {:type      "date"
-                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @from)
-                 :on-change #(reset-input-and-result % from)}]]
-       [:div "tooo_hour: "
-        [:input {:type      "date"
-                 :value     (cf/unparse (cf/formatter "yyyy-MM-dd") @to)
-                 :on-change #(reset-input-and-result % to)}]]
-       [:div "appid: "
-        [:input {:type      "text"
-                 :value     @appid
-                 :on-change #(reset! appid (-> % .-target .-value))
-                 }]]
-       [:div
-        [:button.btn.btn-primary {:on-click get-daily-data}
-         "GET"]]
+       [:h2 "API"]
+       [AutoComplete {:id                "appid"
+                      :dataSource        appidSource
+                      :floatingLabelText "AppId"
+                      :fullWidth         true}]
+       [:p]
+       [DatePicker {:defaultDate @from
+                    :floatingLabelText "from"
+                    :onChange (fn [_ date]
+                                (reset! from date)
+                                (clear))}]
+       [DatePicker {:defaultDate @to
+                    :floatingLabelText "to"
+                    :onChange (fn [_ date]
+                                (reset! to date)
+                                (clear))}]
+       [:p]
+       [RaisedButton {:label "GET DATE"
+                      :secondary true
+                      :on-click get-daily-data}]
+       [:p]
+       ;[Table {:selectable false}
+       ; [TableHeader {:displaySelectAll  false
+       ;               :adjustForCheckbox false}
+       ;  [TableRow
+       ;   [TableHeaderColumn "Date"]
+       ;   [TableHeaderColumn "Number"]]]
+       ; [TableBody {:displayRowCheckbox false
+       ;             :showRowHover       true}
+       ;  (for [r @result
+       ;        :let [d (first r)]]
+       ;    [TableRow
+       ;     [TableRowColumn (key d)]
+       ;     [TableRowColumn (val d)]])]]
        [debug @result]])))
 
 (defn main []
@@ -436,59 +365,40 @@
       [:div.main
        (case @page
          :default [default]
-         :users [users-table {:items-per-page 10
-                              :page           1
-                              :search         "adc"}]
+         :users [users-table]
          :apusers [apusers-table]
-         :about [about]
-         :user [user-graph]
+         :detail-user [detail-user-graph]
          :video [video]
-         :localvideo [localvideo]
          :testin-api-sum [testin-api-sum]
          :data-fast-uv [data-fast-uv]
          :data-fast-api [data-fast-api]
-         :test [test-page]
+         :mytest [mytest]
          )])))
 
 (defn main-panel []
-  (let [username (subscribe [:username])
-        page (subscribe [:page])]
+  (let [username (subscribe [:username])]
     (fn []
       (if (nil? @username)
         [:div.container
          [:div.page-header [:h1 "ICS"]]
          [:div.jumbotron [login-in]]]
-        [:div.container
 
+        [:div
          [AppBar {:title "ICS"}]
 
-         [:nav.navbar.navbar-default
-          [:div.container-fluid
-           [:div.collapse.navbar-collapse
-            [:ul.nav.nav-pills
-             [:li {:class (when (= @page :default) "active")}
-              [:a {:href "#/nav/default"} "Default"]]
-             [:li {:class (when (= @page :users) "active")}
-              [:a {:href "#/nav/users"} "用户"]]
-             [:li {:class (when (= @page :apusers) "active")}
-              [:a {:href "#/nav/apusers"} "申请用户"]]
-             [:li {:class (when (= @page :about) "active")}
-              [:a {:href "#/nav/about"} "About"]]
-             [:li {:class (when (= @page :testin-api-sum) "active")}
-              [:a {:href "#/nav/testin-api-sum"} "testin-api-sum"]]
-             [:li {:class (when (= @page :data-fast-uv) "active")}
-              [:a {:href "#/nav/data-fast-uv"} "data-fast-uv"]]
-             [:li {:class (when (= @page :data-fast-api) "active")}
-              [:a {:href "#/nav/data-fast-api"} "data-fast-api"]]
-             [:li {:class (when (= @page :test) "active")}
-              [:a {:href "#/nav/test"} "test"]]
-             [:li.dropdown
-              [:a.dropdown-toggle {:href          "#/nav/default" :data-toggle "dropdown" :role "button"
-                                   :aria-haspopup "true" :aria-expanded "false"}
-               "More Example" [:span.caret]]
-              [:ul.dropdown-menu
-               [:li [:a {:href "#/nav/video"} "video from youtube"]]
-               [:li [:a {:href "#/nav/localvideo"} "local video"]]
-               [:li.divider {:role "separator"} [:a {:href "#"}]]
-               [:li [:a {:href "#"} "ZZ"]]]]]]]]
-         [main]]))))
+         [:table
+          [:tr
+           [:td {:width "300px"}
+            [LeftNav
+             [MenuItem {:primaryText "Default" :href "#/nav/default"}]
+             [MenuItem {:primaryText "UV" :href "#/nav/data-fast-uv"}]
+             [MenuItem {:primaryText "API" :href "#/nav/data-fast-api"}]
+             [MenuItem {:primaryText "TESTIN-API" :href "#/nav/testin-api-sum"}]
+             [MenuItem {:primaryText "VIDEO" :href "#/nav/video"}]
+             [MenuItem {:primaryText "USERS" :href "#/nav/users"}]
+             [MenuItem {:primaryText "AP-USERS" :href "#/nav/apusers"}]
+             [MenuItem {:primaryText "MY-TEST" :href "#/nav/mytest"}]
+             ]]
+           [:td {:width "auto"}
+            [main]]]]]
+        ))))

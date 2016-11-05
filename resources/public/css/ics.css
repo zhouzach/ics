@@ -1,3 +1,11 @@
+body {
+    font-family: Roboto, sans-serif;
+    backgroud: #2C3D51;
+    padding: 1em;
+    -webkit-font-smoothing: antialiased;
+}
+
+
 .jumbotron {
     background-color: #2E2D88;
     color: white;
@@ -9,6 +17,10 @@ input {
 
 input[type=text], input[type=password] {
     width: 300px;
+}
+
+h2 {
+    display: block;
 }
 
 /*html {*/
