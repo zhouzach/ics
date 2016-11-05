@@ -8,7 +8,7 @@
  */
 
 'use strict';
-import Highcharts from '../parts/Globals.js';
+// import Highcharts from '../parts/Globals.js';
 /* global document */
 // Load the fonts
 Highcharts.createElement('link', {

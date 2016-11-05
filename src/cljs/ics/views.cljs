@@ -21,7 +21,7 @@
             [reagent-material-ui.core :refer [TextField DatePicker RaisedButton RadioButtonGroup RadioButton
                                               Table TableBody TableHeader TableHeaderColumn TableRow TableRowColumn
                                               AppBar AutoComplete MenuItem Menu Paper
-                                              Tabs Tab LeftNav]] #_(LeftNav is Drawer)
+                                              Tabs Tab LeftNav CircularProgress Snackbar]] #_(LeftNav is Drawer)
             ))
 
 (defn async-get
@@ -41,6 +41,8 @@
 
        [MenuItem "Menu Item"]
        [MenuItem "Menu Item2"]
+       [CircularProgress {:mode "determinate"
+                          :value 40}]
        ])))
 
 (defn login-in []
@@ -56,66 +58,70 @@
    [:p [:input {:type "submit" :value "login" :class "btn bt-default btn-lg"}]] [:br]])
 
 (defn users-table []
-  (let [users (subscribe [:users])
-        _ (print "deok" @users)]
+  (let [users (subscribe [:users])]
     (fn []
       [:div
        [:h2 "USERS"]
-       [Table {:selectable false}
-        [TableHeader {:displaySelectAll  false
-                      :adjustForCheckbox false}
-         [TableRow
-          [TableHeaderColumn "账户"]
-          [TableHeaderColumn "创建日期"]
-          [TableHeaderColumn "手机号"]
-          [TableHeaderColumn "API"]
-          [TableHeaderColumn "MAU"]
-          [TableHeaderColumn "黑名单"]
-          [TableHeaderColumn "付费详情"]]]
-        [TableBody {:displayRowCheckbox false
-                    :showRowHover       true}
-         (for [u @users]
+       (if @users
+         [Table {:selectable false}
+          [TableHeader {:displaySelectAll  false
+                        :adjustForCheckbox false}
            [TableRow
-            [TableRowColumn (u "email")]
-            [TableRowColumn (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (u "created_at"))))]
-            [TableRowColumn ((u "operation_info") "phone")]
-            [TableRowColumn (last (last (u "api")))]
-            [TableRowColumn (last (last (u "mau")))]
-            [TableRowColumn [RaisedButton {:label "拉黑" :on-click #(print "拉黑")}]]
-            [TableRowColumn [:a {:href (str "#/detail-user/" (u "id"))
-                                 :target "_blank"} "付费详情"]]])]]])))
+            [TableHeaderColumn "账户"]
+            [TableHeaderColumn "创建日期"]
+            [TableHeaderColumn "手机号"]
+            [TableHeaderColumn "API"]
+            [TableHeaderColumn "MAU"]
+            [TableHeaderColumn "黑名单"]
+            [TableHeaderColumn "付费详情"]]]
+          [TableBody {:displayRowCheckbox false
+                      :showRowHover       true}
+           (for [u @users]
+             [TableRow
+              [TableRowColumn (u "email")]
+              [TableRowColumn (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (u "created_at"))))]
+              [TableRowColumn ((u "operation_info") "phone")]
+              [TableRowColumn (last (last (u "api")))]
+              [TableRowColumn (last (last (u "mau")))]
+              [TableRowColumn [RaisedButton {:label "拉黑" :on-click #(print "拉黑")}]]
+              [TableRowColumn [:a {:href   (str "#/detail-user/" (u "id"))
+                                   :target "_blank"} "付费详情"]]])]]
+         [:div "waiting ... "]
+         )])))
 
 (defn apusers-table []
   (let [apusers (subscribe [:apusers])]
     (fn []
       [:div
        [:h2 "APUSERS"]
-       [Table {:selectable false}
-        [TableHeader {:displaySelectAll  false
-                      :adjustForCheckbox false}
-         [TableRow
-          [TableHeaderColumn "申请时间"]
-          [TableHeaderColumn "公司 / 产品"]
-          [TableHeaderColumn "姓名"]
-          [TableHeaderColumn "邮件"]
-          [TableHeaderColumn "手机号"]
-          [TableHeaderColumn "MAU"]
-          [TableHeaderColumn "发送邀请码"]
-          [TableHeaderColumn "丢弃"]
-          [TableHeaderColumn "处理状态"]]]
-        [TableBody {:displayRowCheckbox false
-                    :showRowHover       true}
-         (for [u @apusers]
+       (if @apusers
+         [Table {:selectable false}
+          [TableHeader {:displaySelectAll  false
+                        :adjustForCheckbox false}
            [TableRow
-            [TableRowColumn (u "created_at")]
-            [TableRowColumn (u "company")]
-            [TableRowColumn (u "name")]
-            [TableRowColumn (u "email")]
-            [TableRowColumn (u "phone")]
-            [TableRowColumn (u "mau")]
-            [TableRowColumn [RaisedButton {:label "发送" :on-click #(println "发送")}]]
-            [TableRowColumn [RaisedButton {:label "丢弃" :on-click #(println "丢弃")}]]
-            [TableRowColumn (u "discard")]])]]])))
+            [TableHeaderColumn "申请时间"]
+            [TableHeaderColumn "公司 / 产品"]
+            [TableHeaderColumn "姓名"]
+            [TableHeaderColumn "邮件"]
+            [TableHeaderColumn "手机号"]
+            [TableHeaderColumn "MAU"]
+            [TableHeaderColumn "发送邀请码"]
+            [TableHeaderColumn "丢弃"]
+            [TableHeaderColumn "处理状态"]]]
+          [TableBody {:displayRowCheckbox false
+                      :showRowHover       true}
+           (for [u @apusers]
+             [TableRow
+              [TableRowColumn (u "created_at")]
+              [TableRowColumn (u "company")]
+              [TableRowColumn (u "name")]
+              [TableRowColumn (u "email")]
+              [TableRowColumn (u "phone")]
+              [TableRowColumn (u "mau")]
+              [TableRowColumn [RaisedButton {:label "发送" :on-click #(println "发送")}]]
+              [TableRowColumn [RaisedButton {:label "丢弃" :on-click #(println "丢弃")}]]
+              [TableRowColumn (u "discard")]])]]
+         [:div "waiting ... "])])))
 
 (defn line-chart-config [user]
   (let [api (user "api")
@@ -130,12 +136,12 @@
                       :data      (map (fn [d] [(date-to-format d) num])
                                       (take (inc (t/in-days (t/interval (sec-to-date begin) (sec-to-date end))))
                                             (iterate (fn [d] (t/plus d (t/days 1))) (sec-to-date begin))))})]
-    {:chart    {:type "line"}
+    {:chart    {:type "column"}
      :title    {:text (str "email: " email)
                 :x    -20}
      :subtitle {:text ""
                 :x    -20}
-     ;:xAxis       {:categories (mapv #(format-date (% "day")) api)}
+     ;:xAxis    {:categories (mapv #(format-date (% "day")) api)}
      :yAxis    {:title     {:text "数量"}
                 :min       0
                 :plotLines [{:value 0 :width 1 :color "#808080"}]}
@@ -167,6 +173,7 @@
         clear #(reset! result-sum 0)
         from (r/atom (t/local-date-time 2016 5 25))
         to (r/atom (ct/time-now))
+        snackbar (r/atom false)
         acc-result (fn []
                      (go
                        (let [users ((<! (async-get "http://auth.appadhoc.com/users" @authkey)) "users")
@@ -201,7 +208,15 @@
                                 (clear))}]
        [RaisedButton {:label "GET DATA"
                       :secondary true
-                      :on-click acc-result}]
+                      :on-click (fn []
+                                  (clear)
+                                  (acc-result)
+                                  (reset! snackbar true)
+                                  )}]
+       [Snackbar {:open @snackbar
+                  :message "accumulation ... "
+                  :autoHideDuration 8000
+                  :onRequestClose #(reset! snackbar false)}]
        [:p]
        [debug @result-sum]])))
 
@@ -375,6 +390,20 @@
          :mytest [mytest]
          )])))
 
+(defn footer []
+  (fn []
+    [:div "footer: learn some css"
+    ;[:div {:style {:background-color "black"
+    ;               :text-align "center"
+    ;               :padding "72px 24px 72px 256px"}}
+    ; [:p "this is some footer of ics"]
+    ; [:a {:href "https://github.com/colorgmi/ics/tree/material-ui" :target "_blank"}
+    ;  [:div
+    ;   [:span {:class "muidocs-icon-custom-github"}]
+    ;   [:span "source code of ics"]]]
+     ]
+    ))
+
 (defn main-panel []
   (let [username (subscribe [:username])]
     (fn []
@@ -396,9 +425,10 @@
              [MenuItem {:primaryText "TESTIN-API" :href "#/nav/testin-api-sum"}]
              [MenuItem {:primaryText "VIDEO" :href "#/nav/video"}]
              [MenuItem {:primaryText "USERS" :href "#/nav/users"}]
-             [MenuItem {:primaryText "AP-USERS" :href "#/nav/apusers"}]
+             [MenuItem {:primaryText "APUSERS" :href "#/nav/apusers"}]
              [MenuItem {:primaryText "MY-TEST" :href "#/nav/mytest"}]
              ]]
-           [:td {:width "auto"}
-            [main]]]]]
-        ))))
+           [:td {:width "1200px"}
+            [:div
+             [main]
+             [footer]]]]]]))))

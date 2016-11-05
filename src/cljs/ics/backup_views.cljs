@@ -17,8 +17,8 @@
   [:pre (with-out-str (pprint data))])
 
 ;;;
-(def hi-config
-  {:chart    {:type "line"}
+(def hi-line-config
+  {:chart    {:type "spline"}
    :title    {:text "Monthly Average Temperature"
               :x    -20}
    :subtitle {:text "Source: WorldClimate.com"
@@ -39,6 +39,35 @@
                :data [-0.9, 0.6, 3.5, 8.4, 13.5, 17.0, 18.6, 17.9, 14.3, 9.0, 3.9, 1.0]}
               {:name "London"
                :data [3.9, 4.2, 5.7, 8.5, 11.9, 15.2, 17.0, 16.6, 14.2, 10.3, 6.6, 4.8]}]
+   })
+
+(def hi-responsive-chart-config
+  {:chart      {:type "column"}
+   :title      {:text "Highcharts responsive chart"}
+   :subtitle   {:text "Resize the frame or click buttons to change appearance"}
+   :legend     {:align         "right"
+                :verticalAlign "middle"
+                :layout        "vertical"}
+   :xAxis      {:categories ["Apples", "Oranges", "Bananas"]
+                :labels     {:x -10}}
+   :yAxis      {:allowDecimals false
+                :title         {:text "Amount"}}
+   :series [{:name "Christmas Eve"
+             :data [1, 4, 3]}
+            {:name "Christmas Day before dinner"
+             :data [6, 4, 2]}
+            {:name "Christmas Day after dinner"
+             :data [8, 4, 3]}]
+   ;:responsive {:rules [{:condition    {:maxWidth 500}
+   ;                      :chartOptions {:legend   {:align         "center"
+   ;                                                :verticalAlign "bottom"
+   ;                                                :layout        "horizontal"}
+   ;                                     :yAxis    {:labels {:align "left"
+   ;                                                         :x     0
+   ;                                                         :y     -5}
+   ;                                                :title  {:text nil}}
+   ;                                     :subtitle {:text nil}
+   ;                                     :credits  {:enabled false}}}]}
    })
 
 (defn hello-message [name]
@@ -112,7 +141,8 @@
        (js/Highcharts.Chart. (r/dom-node this) (clj->js config)))}))
 
 (defn default []
-  (let [date (r/atom (today))]
+  (let [date (r/atom (today))
+        ]
     (fn []
       [:div
        [:h2 "Default"]
@@ -124,7 +154,8 @@
        [debug {:password (:password @re-frame.db/app-db)}]
        [debug {:authkey (:authkey @re-frame.db/app-db)}]
        [debug {:page (:page @re-frame.db/app-db)}]
-       [highcharts hi-config]
+       [highcharts hi-responsive-chart-config]
+       [highcharts hi-line-config]
        ]
        )))
 
