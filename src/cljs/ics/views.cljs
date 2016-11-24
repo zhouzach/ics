@@ -31,31 +31,57 @@
               :handler (fn [res] (put! ch res))})
     ch))
 
+(defn async-post
+  [url authkey data]
+  (let [ch (chan)]
+    (POST url {:headers {"Auth-Key" authkey}
+               :params data
+               :format :json
+               :handler (fn [res] (put! ch res))})
+    ch))
+
 (defn mytest []
-  (let [state (r/atom false)]
+  (let [authkey (subscribe [:authkey])
+        act (fn []
+              (go
+                (let [users ((<! (async-get "http://auth.appadhoc.com/users" @authkey)) "users")
+                      testin-users (filter #(= "testin" (% "third_party_from")) users)
+                      testin-users-ids (set (map #(% "id") testin-users))]
+                  (doseq [id testin-users-ids]
+                    (print (<! (async-post (str "https://auth.appadhoc.com/user/" id)
+                                           @authkey
+                                           {:pay {:begin 1478275200
+                                                  :end 1514736000
+                                                  :num 0}}))))
+                  )))
+
+        ]
     (fn []
       [:div
-       [:h2 "MY-TEST"]
-       [RaisedButton {:label      "Toggle Drawer"
-                      :onTouchTap #(swap! state not)}]
+       [:h2 "MY TEST"]
 
-       [MenuItem "Menu Item"]
-       [MenuItem "Menu Item2"]
-       [CircularProgress {:mode "determinate"
-                          :value 40}]
+       ;[RaisedButton {:label "Post"
+       ;               :secondary true
+       ;               :on-click act}]
+
        ])))
 
 (defn login-in []
-  [:form.login {:onSubmit (fn [e]
-                            (.preventDefault e)
-                            (let [username (.-value (js/document.getElementById "username"))
-                                  password (.-value (js/document.getElementById "password"))]
-                              (if-not (validate-email username)
-                                (js/alert "invalid email")
-                                (dispatch [:login username password]))))}
-   [:p "username: " [:input {:type "text" :placeholder "username" :id "username"}] [:br]]
-   [:p "password: " [:input {:type "password" :placeholder "password" :id "password"}] [:br]]
-   [:p [:input {:type "submit" :value "login" :class "btn bt-default btn-lg"}]] [:br]])
+  [:div {:style {:text-align "center"}}
+   [:h2 "ICS"]
+   [:form.login
+    [TextField {:hintText "username" :id "username"}]
+    [:br]
+    [TextField {:hintText "password" :type "password" :id "password"}]
+    [:br]
+    [RaisedButton {:label     "Login"
+                   :secondary true
+                   :on-click  (fn []
+                                (let [username (.-value (js/document.getElementById "username"))
+                                      password (.-value (js/document.getElementById "password"))]
+                                  (if-not (validate-email username)
+                                    (js/alert "invalid email")
+                                    (dispatch [:login username password]))))}]]])
 
 (defn users-table []
   (let [users (subscribe [:users])]
@@ -67,6 +93,7 @@
           [TableHeader {:displaySelectAll  false
                         :adjustForCheckbox false}
            [TableRow
+            [TableHeaderColumn "ID"]
             [TableHeaderColumn "账户"]
             [TableHeaderColumn "创建日期"]
             [TableHeaderColumn "手机号"]
@@ -78,6 +105,7 @@
                       :showRowHover       true}
            (for [u @users]
              [TableRow
+              [TableRowColumn (u "id")]
               [TableRowColumn (u "email")]
               [TableRowColumn (f/unparse (f/formatters :date-time-no-ms) (c/from-long (* 1000 (u "created_at"))))]
               [TableRowColumn ((u "operation_info") "phone")]
@@ -85,7 +113,8 @@
               [TableRowColumn (last (last (u "mau")))]
               [TableRowColumn [RaisedButton {:label "拉黑" :on-click #(print "拉黑")}]]
               [TableRowColumn [:a {:href   (str "#/detail-user/" (u "id"))
-                                   :target "_blank"} "付费详情"]]])]]
+                                   ;:target "_blank"
+                                   } "付费详情"]]])]]
          [:div "waiting ... "]
          )])))
 
@@ -359,19 +388,33 @@
                       :secondary true
                       :on-click get-daily-data}]
        [:p]
-       ;[Table {:selectable false}
-       ; [TableHeader {:displaySelectAll  false
-       ;               :adjustForCheckbox false}
-       ;  [TableRow
-       ;   [TableHeaderColumn "Date"]
-       ;   [TableHeaderColumn "Number"]]]
-       ; [TableBody {:displayRowCheckbox false
-       ;             :showRowHover       true}
-       ;  (for [r @result
-       ;        :let [d (first r)]]
-       ;    [TableRow
-       ;     [TableRowColumn (key d)]
-       ;     [TableRowColumn (val d)]])]]
+       [debug @result]])))
+
+(defn user-apps []
+  (let [authkey (subscribe [:authkey])
+        result (r/atom nil)]
+    (fn []
+      [:div
+       [:h2 "user-apps"]
+       [TextField {:hintText "userid" :id "userid" :fullWidth true}]
+       [:br]
+       [RaisedButton {:label "GET APIS"
+                      :secondary true
+                      :on-click (fn []
+                                  (go
+                                    (let [all-apps ((<! (async-get "http://auth.appadhoc.com/apps" @authkey)) "apps")
+                                          apps (filter #(= (% "author_id") (.-value (js/document.getElementById "userid"))) all-apps)]
+                                      (reset! result apps))))}]
+       [Table {:selectable false}
+        [TableHeader {:displaySelectAll  false
+                      :adjustForCheckbox false}
+         [TableRow
+          [TableHeaderColumn "APPID"]
+          [TableBody {:displayRowCheckbox false
+                      :showRowHover       true}
+           (for [api @result]
+             [TableRow
+              [TableRowColumn (api "id")]])]]]]
        [debug @result]])))
 
 (defn main []
@@ -388,6 +431,7 @@
          :data-fast-uv [data-fast-uv]
          :data-fast-api [data-fast-api]
          :mytest [mytest]
+         :user-apps [user-apps]
          )])))
 
 (defn footer []
@@ -408,9 +452,10 @@
   (let [username (subscribe [:username])]
     (fn []
       (if (nil? @username)
-        [:div.container
-         [:div.page-header [:h1 "ICS"]]
-         [:div.jumbotron [login-in]]]
+        ;[:div.container
+        ; [:div.page-header [:h1 "ICS"]]
+        ; [:div.jumbotron [login-in]]]
+        [login-in]
 
         [:div
          [AppBar {:title "ICS"}]
@@ -427,6 +472,7 @@
              [MenuItem {:primaryText "USERS" :href "#/nav/users"}]
              [MenuItem {:primaryText "APUSERS" :href "#/nav/apusers"}]
              [MenuItem {:primaryText "MY-TEST" :href "#/nav/mytest"}]
+             [MenuItem {:primaryText "USER-APPS" :href "#/nav/user-apps"}]
              ]]
            [:td {:width "1200px"}
             [:div
