@@ -11,10 +11,28 @@
             [ics.common :refer [validate-email sec-to-date date-to-format sec-to-format]]
             [ics.common-component :refer [date-component today parse-date]]
             [cljs.pprint :refer [pprint]]
-            [cljs-time.core :as ct]))
+            [cljs-time.core :as ct]
+            [reagent-material-ui.core :refer [TextField DatePicker RaisedButton RadioButtonGroup RadioButton
+                                              Table TableBody TableHeader TableHeaderColumn TableRow TableRowColumn
+                                              AppBar AutoComplete MenuItem Menu Paper FlatButton
+                                              Tabs Tab LeftNav CircularProgress Snackbar]] #_(LeftNav is Drawer)
+            ))
 
 (defn debug [data]
   [:pre (with-out-str (pprint data))])
+
+;; todo (why fn () failed)
+(let [hidden (r/atom "hidden")]
+  (defn debug-ui [data]
+    [:div
+     [FlatButton {:label     "debug"
+                  :primary true
+                  :on-click #(case @hidden
+                              "hidden" (reset! hidden "visible")
+                              "visible" (reset! hidden "hidden"))}]
+     [:pre
+      {:style {:visibility @hidden}}
+      (with-out-str (pprint data))]]))
 
 ;;;
 (def hi-line-config

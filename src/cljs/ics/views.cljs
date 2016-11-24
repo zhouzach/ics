@@ -14,7 +14,7 @@
             [cljsjs.reactable]
             [cljsjs.nprogress]
             [ics.common :refer [validate-email sec-to-date date-to-format sec-to-format]]
-            [ics.backup-view :refer [default debug video highcharts]]
+            [ics.backup-view :refer [default debug debug-ui video highcharts]]
             [cljs.pprint :refer [pprint]]
             [cljs-time.core :as ct]
             [cljs-time.format :as cf]
@@ -332,7 +332,7 @@
             [TableRowColumn (key d)]
             [TableRowColumn (val d)]])]]
 
-       [debug @result]
+       [debug-ui @result]
 
        ])))
 
@@ -398,7 +398,7 @@
        [:h2 "user-apps"]
        [TextField {:hintText "userid" :id "userid" :fullWidth true}]
        [:br]
-       [RaisedButton {:label "GET APIS"
+       [RaisedButton {:label "GET APPS"
                       :secondary true
                       :on-click (fn []
                                   (go
@@ -415,7 +415,7 @@
            (for [api @result]
              [TableRow
               [TableRowColumn (api "id")]])]]]]
-       [debug @result]])))
+       [debug-ui @result]])))
 
 (defn main []
   (let [page (subscribe [:page])]
