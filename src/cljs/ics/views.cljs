@@ -119,10 +119,26 @@
          )])))
 
 (defn apusers-table []
-  (let [apusers (subscribe [:apusers])]
+  (let [apusers (subscribe [:apusers])
+        ;version (atom "origin")
+        sec2date #(f/unparse (f/formatters :date-time-no-ms) (t/to-default-time-zone (c/from-long (* % 1000))))
+        ]
     (fn []
       [:div
        [:h2 "APUSERS"]
+       ;[debug (f/unparse (f/formatters :date-time-no-ms) (t/to-default-time-zone (c/from-long (* 1479183418 1000))))]
+       ;; TODO 1 => RadioButton and RichTable
+       ;; TODO 2 => chrome cache error!
+
+       ;[RadioButtonGroup {:defaultSelected @version
+       ;                   :onChange (fn [event value]
+       ;                               (reset! version value)
+       ;                               (print "version" @version)
+       ;                               )}
+       ; [RadioButton {:value "origin" :label "原始版本(详细信息)"}]
+       ; [RadioButton {:value "email" :label "邮件版本"}]
+       ; [RadioButton {:value "phoneemail" :label "电话加邮件版本"}]
+       ; [RadioButton {:value "phone" :label "电话版本(停止使用)"}]]
        (if @apusers
          [Table {:selectable false}
           [TableHeader {:displaySelectAll  false
@@ -134,21 +150,21 @@
             [TableHeaderColumn "邮件"]
             [TableHeaderColumn "手机号"]
             [TableHeaderColumn "MAU"]
-            [TableHeaderColumn "发送邀请码"]
-            [TableHeaderColumn "丢弃"]
-            [TableHeaderColumn "处理状态"]]]
+            [TableHeaderColumn "Version"]
+            [TableHeaderColumn "discard"]]]
           [TableBody {:displayRowCheckbox false
                       :showRowHover       true}
-           (for [u @apusers]
+           ;(for [u (filter #(= @version (get % "version" "origin")) @apusers)]
+           (for [u (filter #(= "phone" (get % "version" "")) (sort-by #(- (% "created_at")) @apusers))]
+             ;(for [u @apusers]
              [TableRow
-              [TableRowColumn (u "created_at")]
+              [TableRowColumn (sec2date (u "created_at"))]
               [TableRowColumn (u "company")]
               [TableRowColumn (u "name")]
               [TableRowColumn (u "email")]
-              [TableRowColumn (u "phone")]
+              [TableRowColumn (u "mobile")]
               [TableRowColumn (u "mau")]
-              [TableRowColumn [RaisedButton {:label "发送" :on-click #(println "发送")}]]
-              [TableRowColumn [RaisedButton {:label "丢弃" :on-click #(println "丢弃")}]]
+              [TableRowColumn (u "version")]
               [TableRowColumn (u "discard")]])]]
          [:div "waiting ... "])])))
 
