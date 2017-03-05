@@ -7,6 +7,8 @@ A [re-frame](https://github.com/Day8/re-frame) application designed to ... well,
 ### Run application:
 
 ```
+lein figwheel
+
 lein clean
 rlwrap lein figwheel dev
 

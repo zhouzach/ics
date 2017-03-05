@@ -155,8 +155,8 @@
           [TableBody {:displayRowCheckbox false
                       :showRowHover       true}
            ;(for [u (filter #(= @version (get % "version" "origin")) @apusers)]
-           (for [u (filter #(= "phone" (get % "version" "")) (sort-by #(- (% "created_at")) @apusers))]
-             ;(for [u @apusers]
+           ;; (for [u (filter #(= "phone" (get % "version" "")) (sort-by #(- (% "created_at")) @apusers))]
+             (for [u (sort-by #(- (% "created_at")) @apusers)]
              [TableRow
               [TableRowColumn (sec2date (u "created_at"))]
               [TableRowColumn (u "company")]
@@ -434,21 +434,23 @@
        [debug-ui @result]])))
 
 (defn main []
-  (let [page (subscribe [:page])]
+  (let [page (subscribe [:page])
+        detail-user-info (subscribe [:detail-user-info])]
     (fn []
       [:div.main
        (case @page
          :default [default]
          :users [users-table]
          :apusers [apusers-table]
-         :detail-user [detail-user-graph]
          :video [video]
          :testin-api-sum [testin-api-sum]
          :data-fast-uv [data-fast-uv]
          :data-fast-api [data-fast-api]
          :mytest [mytest]
          :user-apps [user-apps]
-         )])))
+         :detail-user [detail-user-graph] ;; a bug!!
+         )
+       ])))
 
 (defn footer []
   (fn []

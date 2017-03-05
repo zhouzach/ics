@@ -53,7 +53,8 @@
 (reg-event-db
   :detail-user-info
   (fn [db [_ value]]
-    (assoc db :detail-user-info value)))
+    (println "dispatch :detail-user-info" value)
+    (assoc db :detail-user-info value :page :detail-user)))
 
 (reg-event-db
   :testin-api-sum
@@ -87,4 +88,4 @@
        :handler (fn [res]
                   (dispatch [:detail-user-info res])
                   )})
-    (assoc db :page :detail-user)))
+    db))
